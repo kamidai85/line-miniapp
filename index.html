@@ -103,13 +103,6 @@
             text-align: center;
         }
 
-        .debug-info {
-            font-size: 12px;
-            margin-top: 20px;
-            color: #6c757d;
-            display: none; /* 通常は非表示、必要時にのみ表示 */
-        }
-
         .retry-button {
             background-color: #6c757d;
             color: white;
@@ -122,27 +115,6 @@
             display: inline-block;
             width: auto;
         }
-
-        .loading-indicator {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #06c755;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -151,11 +123,6 @@
         
         <div id="errorMessageContainer">
             <!-- エラーメッセージがここに表示されます -->
-        </div>
-
-        <div id="loadingIndicator" class="loading-indicator">
-            <div class="loader"></div>
-            <p>処理中...</p>
         </div>
 
         <div id="profile-area" class="profile-info" style="display: none;">
@@ -218,23 +185,17 @@
         <div id="successMessage" class="success-message">
             送信が完了しました。ありがとうございました！
         </div>
-        
-        <div class="debug-info" id="debugInfo"></div>
     </div>
 
     <script>
-        // デバッグモード（本番環境ではfalseに設定）
-        const DEBUG_MODE = false;
-        
         // エラーメッセージを表示する関数
         function showError(message, withRetry = true) {
-            const container = document.getElementById('errorMessageContainer');
-            container.innerHTML = '';
-            
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.textContent = message;
             
+            const container = document.getElementById('errorMessageContainer');
+            container.innerHTML = '';
             container.appendChild(errorDiv);
             
             if (withRetry) {
@@ -243,90 +204,17 @@
                 retryButton.textContent = '再試行';
                 retryButton.onclick = function() {
                     container.innerHTML = '';
-                    initializeLiff(); // LIFF再初期化
+                    initializeLiff();
                 };
                 errorDiv.appendChild(document.createElement('br'));
                 errorDiv.appendChild(retryButton);
             }
         }
-        
-        // ローディング表示の切り替え
-        function toggleLoading(show) {
-            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
-        }
-        
-        // デバッグ情報を表示する関数
-        function addDebugInfo(message) {
-            if (!DEBUG_MODE) return;
-            
-            const debugInfo = document.getElementById('debugInfo');
-            debugInfo.style.display = 'block';
-            debugInfo.innerHTML += message + '<br>';
-        }
-        
-        // LIFF初期化関数
-        function initializeLiff() {
-            toggleLoading(true);
-            addDebugInfo('LIFF初期化開始');
-            
-            // 複数のLIFF IDを試す
-            const liffIds = [
-                "2007092173", 
-                "2007092173-D9er4eP"
-            ];
-            
-            // 最初のIDで試す
-            tryInitWithId(liffIds, 0);
-        }
-        
-        // 特定のIDでLIFF初期化を試みる
-        function tryInitWithId(ids, index) {
-            if (index >= ids.length) {
-                // すべてのIDで失敗した場合
-                toggleLoading(false);
-                showError('LIFFの初期化に失敗しました。時間をおいて再度お試しください。');
-                addDebugInfo('すべてのLIFF IDで初期化失敗');
-                return;
-            }
-            
-            const liffId = ids[index];
-            addDebugInfo('LIFF ID試行: ' + liffId);
-            
-            liff.init({
-                liffId: liffId
-            }).then(() => {
-                // 成功
-                toggleLoading(false);
-                addDebugInfo('LIFF初期化成功: ID = ' + liffId);
-                
-                // LINEにログインしているか確認
-                if (liff.isLoggedIn()) {
-                    addDebugInfo('LINEログイン済み');
-                    // ユーザープロフィールを取得
-                    fetchUserProfile();
-                } else {
-                    addDebugInfo('未ログイン状態、ログイン処理開始');
-                    // ログインしていない場合はログインを促す
-                    liff.login();
-                }
-            }).catch((err) => {
-                // このIDでの初期化に失敗したら次のIDを試す
-                addDebugInfo('ID ' + liffId + ' での初期化失敗: ' + err.message);
-                // 少し待ってから次のIDを試す
-                setTimeout(() => {
-                    tryInitWithId(ids, index + 1);
-                }, 500);
-            });
-        }
-        
+
         // ユーザープロフィールを取得する関数
         function fetchUserProfile() {
-            addDebugInfo('プロフィール取得開始');
-            
             liff.getProfile()
                 .then(profile => {
-                    addDebugInfo('プロフィール取得成功');
-                    
                     const profileNameElement = document.getElementById('profile-name');
                     profileNameElement.textContent = profile.displayName;
                     
@@ -337,41 +225,42 @@
                     document.getElementById('profile-area').style.display = 'block';
                 })
                 .catch(err => {
-                    addDebugInfo('プロフィール取得エラー: ' + err.message);
-                    console.error("Error getting profile", err);
+                    console.error("プロフィール取得エラー:", err);
                     // プロフィール取得に失敗してもフォームは表示する
                 });
         }
         
-        // DOMの読み込み完了時にLIFFを初期化
-        document.addEventListener('DOMContentLoaded', function() {
-            addDebugInfo('DOM読み込み完了');
-            addDebugInfo('LIFF SDK読み込み: ' + (typeof liff !== 'undefined' ? '成功' : '失敗'));
+        // LIFF初期化関数
+        function initializeLiff() {
+            // 正確なLIFF ID (miniappのURLから確認)
+            const liffId = "1657860433-xj1RokLP";
             
-            if (typeof liff === 'undefined') {
-                // LIFF SDKが読み込まれていない場合
-                showError('LIFF SDKの読み込みに失敗しました。ネットワーク接続を確認してください。', false);
-                return;
-            }
-            
-            try {
-                initializeLiff();
-            } catch (e) {
-                toggleLoading(false);
-                addDebugInfo('初期化中に例外発生: ' + e.message);
-                showError('初期化中にエラーが発生しました: ' + e.message);
-                console.error('Init error:', e);
-            }
-        });
-
+            liff.init({ liffId: liffId })
+                .then(() => {
+                    console.log("LIFF初期化成功");
+                    
+                    // LINEにログインしているか確認
+                    if (liff.isLoggedIn()) {
+                        console.log("LINEログイン済み");
+                        // ユーザープロフィールを取得
+                        fetchUserProfile();
+                    } else {
+                        console.log("未ログイン状態、ログイン処理開始");
+                        // ログインしていない場合はログインを促す
+                        liff.login();
+                    }
+                })
+                .catch((err) => {
+                    console.error("LIFF初期化失敗:", err);
+                    showError('LIFFの初期化に失敗しました。時間をおいて再度お試しください。');
+                });
+        }
+        
         // フォーム送信処理
         document.getElementById('myForm').addEventListener('submit', function(event) {
             event.preventDefault();
             
             try {
-                addDebugInfo('フォーム送信処理開始');
-                toggleLoading(true);
-                
                 // フォームデータの収集
                 const formData = new FormData(this);
                 const formObject = {};
@@ -381,16 +270,14 @@
                 }
                 
                 // ユーザーIDを追加（LINEの場合）
-                if (typeof liff !== 'undefined' && liff.isLoggedIn()) {
+                if (liff.isLoggedIn()) {
                     try {
                         const idToken = liff.getDecodedIDToken();
                         if (idToken && idToken.sub) {
                             formObject.userId = idToken.sub;
-                            // セキュリティのため、ユーザーIDはログに残さない
                         }
                     } catch (e) {
-                        addDebugInfo('ユーザーID取得エラー: ' + e.message);
-                        console.error("Error getting user ID:", e);
+                        console.error("ユーザーID取得エラー:", e);
                     }
                 }
                 
@@ -398,37 +285,22 @@
                 document.getElementById('submitButton').disabled = true;
                 document.getElementById('submitButton').textContent = "送信中...";
                 
-                addDebugInfo('Google Apps Scriptに送信開始');
-                
-                // ここでデータをGoogle Apps Scriptに送信
+                // Google Apps Scriptにデータを送信
                 fetch('https://script.google.com/macros/s/AKfycbxRc_jkkSn6VAJK-MkONDfwm5lVvr16rXsm4Npl73MtT1FewryTamaQdEbqPP7YPT0w/exec', {
                     method: 'POST',
-                    mode: 'cors', // CORSモードを明示的に指定
+                    mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(formObject)
                 })
                 .then(response => {
-                    addDebugInfo('サーバーレスポンス受信: ' + response.status);
-                    toggleLoading(false);
-                    
                     if (!response.ok) {
                         throw new Error('サーバーエラー: ' + response.status);
                     }
-                    
-                    // レスポンスがJSONかどうか確認
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json();
-                    } else {
-                        throw new Error('レスポンスがJSON形式ではありません');
-                    }
+                    return response.json();
                 })
                 .then(data => {
-                    addDebugInfo('送信成功');
-                    
-                    // サーバーからのレスポンスを確認
                     if (data.result === 'error') {
                         throw new Error(data.message || 'サーバーでエラーが発生しました');
                     }
@@ -437,35 +309,33 @@
                     document.getElementById('successMessage').style.display = 'block';
                     document.getElementById('myForm').style.display = 'none';
                     
-                    // 3秒後にLINEアプリに戻る（オプション）
+                    // 3秒後にLINEアプリに戻る（LINEアプリ内の場合）
                     setTimeout(() => {
-                        if (typeof liff !== 'undefined' && liff.isInClient()) {
-                            addDebugInfo('LINEアプリに戻ります');
+                        if (liff.isInClient()) {
                             liff.closeWindow();
                         }
                     }, 3000);
                 })
                 .catch(error => {
-                    toggleLoading(false);
-                    addDebugInfo('送信エラー: ' + error.message);
+                    console.error('送信エラー:', error);
                     showError('送信エラー: ' + error.message);
-                    console.error('Error:', error);
                     
                     // エラー時にボタンを再度有効化
                     document.getElementById('submitButton').disabled = false;
                     document.getElementById('submitButton').textContent = "送信する";
                 });
             } catch (error) {
-                toggleLoading(false);
-                addDebugInfo('送信処理エラー: ' + error.message);
+                console.error('送信処理エラー:', error);
                 showError('送信処理エラー: ' + error.message);
-                console.error('Form submission error:', error);
                 
                 // エラー時にボタンを再度有効化
                 document.getElementById('submitButton').disabled = false;
                 document.getElementById('submitButton').textContent = "送信する";
             }
         });
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', initializeLiff);
     </script>
 </body>
 </html>
