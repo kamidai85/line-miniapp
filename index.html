@@ -235,7 +235,13 @@
                 retryButton.textContent = '再試行';
                 retryButton.onclick = function() {
                     container.innerHTML = '';
-                    initializeLiff();
+                    if (message.includes('送信エラー')) {
+                        // 送信をやり直す
+                        submitForm();
+                    } else {
+                        // LIFFを再初期化
+                        initializeLiff();
+                    }
                 };
                 errorDiv.appendChild(document.createElement('br'));
                 errorDiv.appendChild(retryButton);
@@ -295,22 +301,27 @@
                     showError('LIFFの初期化に失敗しました。時間をおいて再度お試しください。');
                 });
         }
-        
-        // フォーム送信処理
-        document.getElementById('myForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
+
+        // フォーム送信関数（JSONP方式）
+        function submitForm() {
             try {
                 console.log("フォーム送信処理開始");
                 toggleLoading(true);
                 
-                // フォームデータの収集
-                const formData = new FormData(this);
+                // エラーメッセージをクリア
+                document.getElementById('errorMessageContainer').innerHTML = '';
+                
+                // 送信ボタンを無効化して重複送信を防止
+                document.getElementById('submitButton').disabled = true;
+                document.getElementById('submitButton').textContent = "送信中...";
+                
+                // フォームデータを取得
+                const form = document.getElementById('myForm');
+                const formData = new FormData(form);
                 const formObject = {};
                 
                 for (let [key, value] of formData.entries()) {
                     formObject[key] = value;
-                    console.log("フォームデータ:", key, "=", value);
                 }
                 
                 // ユーザーIDを追加（LINEの場合）
@@ -319,65 +330,98 @@
                         const idToken = liff.getDecodedIDToken();
                         if (idToken && idToken.sub) {
                             formObject.userId = idToken.sub;
-                            console.log("ユーザーID取得成功");
                         }
                     } catch (e) {
                         console.error("ユーザーID取得エラー:", e);
                     }
                 }
                 
-                // 送信ボタンを無効化して重複送信を防止
-                document.getElementById('submitButton').disabled = true;
-                document.getElementById('submitButton').textContent = "送信中...";
+                // タイムスタンプを追加
+                formObject.timestamp = new Date().toISOString();
                 
-                console.log("Google Apps Scriptに送信開始");
+                console.log("送信データ:", formObject);
                 
-                // Google Apps Scriptにデータを送信
-                fetch('https://script.google.com/macros/s/AKfycbxRc_jkkSn6VAJK-MkONDfwm5lVvr16rXsm4Npl73MtT1FewryTamaQdEbqPP7YPT0w/exec', {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formObject)
-                })
-                .then(response => {
+                // URLSearchParamsを使用してクエリパラメータに変換
+                const params = new URLSearchParams();
+                
+                // データをクエリパラメータに追加
+                for (const key in formObject) {
+                    params.append(key, formObject[key]);
+                }
+                
+                // データ送信のためのscriptタグを作成
+                const script = document.createElement('script');
+                
+                // コールバック関数を定義
+                window.handleGASResponse = function(response) {
                     toggleLoading(false);
-                    console.log("サーバーレスポンス:", response.status);
+                    console.log("GASレスポンス:", response);
                     
-                    if (!response.ok) {
-                        throw new Error('サーバーエラー: ' + response.status);
+                    if (response.result === 'success') {
+                        // 送信成功時の処理
+                        document.getElementById('successMessage').style.display = 'block';
+                        document.getElementById('myForm').style.display = 'none';
+                        
+                        // 3秒後にLINEアプリに戻る（LINEアプリ内の場合）
+                        setTimeout(() => {
+                            if (liff.isInClient()) {
+                                console.log("LINEアプリに戻ります");
+                                liff.closeWindow();
+                            }
+                        }, 3000);
+                    } else {
+                        // エラー処理
+                        showError('送信エラー: ' + (response.message || '不明なエラー'));
+                        
+                        // エラー時にボタンを再度有効化
+                        document.getElementById('submitButton').disabled = false;
+                        document.getElementById('submitButton').textContent = "送信する";
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("送信成功:", data);
                     
-                    if (data.result === 'error') {
-                        throw new Error(data.message || 'サーバーでエラーが発生しました');
-                    }
-                    
-                    // 送信成功時の処理
-                    document.getElementById('successMessage').style.display = 'block';
-                    document.getElementById('myForm').style.display = 'none';
-                    
-                    // 3秒後にLINEアプリに戻る（LINEアプリ内の場合）
-                    setTimeout(() => {
-                        if (liff.isInClient()) {
-                            console.log("LINEアプリに戻ります");
-                            liff.closeWindow();
-                        }
-                    }, 3000);
-                })
-                .catch(error => {
+                    // 使用済みのscriptタグを削除
+                    document.body.removeChild(script);
+                    delete window.handleGASResponse;
+                };
+                
+                // タイムアウト処理
+                const timeoutId = setTimeout(() => {
+                    console.error("API呼び出しがタイムアウトしました");
                     toggleLoading(false);
-                    console.error('送信エラー:', error);
-                    showError('送信エラー: ' + error.message);
+                    showError('送信がタイムアウトしました。時間をおいて再度お試しください。');
                     
                     // エラー時にボタンを再度有効化
                     document.getElementById('submitButton').disabled = false;
                     document.getElementById('submitButton').textContent = "送信する";
-                });
+                    
+                    // タイムアウト時にもスクリプトを削除
+                    if (document.body.contains(script)) {
+                        document.body.removeChild(script);
+                    }
+                    delete window.handleGASResponse;
+                }, 15000); // 15秒でタイムアウト
+                
+                // JSONP呼び出し用のURLを作成
+                script.src = `https://script.google.com/macros/s/AKfycbw1czTvI0Sz-IHK4CXYCh7_ICUw95rGWt2wsc2zBZNCsN5q3aOctQBk_k2wKqQxnso8/exec?${params.toString()}&callback=handleGASResponse`;
+                
+                // スクリプトのロードエラーハンドリング
+                script.onerror = function() {
+                    clearTimeout(timeoutId);
+                    console.error("スクリプトのロードに失敗しました");
+                    toggleLoading(false);
+                    showError('送信エラー: APIの呼び出しに失敗しました');
+                    
+                    // エラー時にボタンを再度有効化
+                    document.getElementById('submitButton').disabled = false;
+                    document.getElementById('submitButton').textContent = "送信する";
+                    
+                    // エラー時にもスクリプトを削除
+                    document.body.removeChild(script);
+                    delete window.handleGASResponse;
+                };
+                
+                // スクリプトをページに追加して実行
+                document.body.appendChild(script);
+                
             } catch (error) {
                 toggleLoading(false);
                 console.error('送信処理エラー:', error);
@@ -387,6 +431,12 @@
                 document.getElementById('submitButton').disabled = false;
                 document.getElementById('submitButton').textContent = "送信する";
             }
+        }
+        
+        // フォーム送信イベント
+        document.getElementById('myForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitForm();
         });
         
         // 初期化
