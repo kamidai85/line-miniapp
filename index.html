@@ -88,6 +88,16 @@
         .profile-name {
             font-weight: bold;
         }
+
+        .error-message {
+            display: none;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -97,6 +107,8 @@
         <div id="profile-area" class="profile-info" style="display: none;">
             <p>こんにちは <span id="profile-name" class="profile-name"></span> さん</p>
         </div>
+
+        <div id="errorMessage" class="error-message"></div>
 
         <form id="myForm">
             <div class="form-group">
@@ -176,6 +188,8 @@
                 }
             }).catch((err) => {
                 console.error("LIFF initialization failed", err);
+                document.getElementById('errorMessage').textContent = "LIFF初期化エラー: " + err.message;
+                document.getElementById('errorMessage').style.display = 'block';
             });
         });
 
@@ -199,46 +213,76 @@
         document.getElementById('myForm').addEventListener('submit', function(event) {
             event.preventDefault();
             
-            // フォームデータの収集
-            const formData = new FormData(this);
-            const formObject = {};
-            
-            for (let [key, value] of formData.entries()) {
-                formObject[key] = value;
-            }
-            
-            // ユーザーIDを追加（LINEの場合）
-            if (liff.isLoggedIn()) {
-                const userId = liff.getDecodedIDToken().sub;
-                formObject.userId = userId;
-            }
-            
-            // ここでデータをGoogle Apps Scriptに送信
-            // Google Apps ScriptのWebアプリケーションURL
-            fetch('https://script.google.com/macros/s/AKfycbzAEFOGCimmNjNA5tehPWlD_DUM8LF2-ePGULHuh6KYydnmejYPGU6qCuvffQAjNJ91/exec', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formObject)
-            })
-            .then(response => response.json())
-            .then(data => {
-                // 送信成功時の処理
-                document.getElementById('successMessage').style.display = 'block';
-                document.getElementById('myForm').reset();
+            try {
+                // フォームデータの収集
+                const formData = new FormData(this);
+                const formObject = {};
                 
-                // 3秒後にLINEアプリに戻る（オプション）
-                setTimeout(() => {
-                    if (liff.isInClient()) {
-                        liff.closeWindow();
+                for (let [key, value] of formData.entries()) {
+                    formObject[key] = value;
+                }
+                
+                // ユーザーIDを追加（LINEの場合）
+                if (liff.isLoggedIn()) {
+                    try {
+                        const idToken = liff.getDecodedIDToken();
+                        if (idToken) {
+                            formObject.userId = idToken.sub;
+                        }
+                    } catch (e) {
+                        console.error("Error getting user ID:", e);
                     }
-                }, 3000);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('エラーが発生しました。もう一度お試しください。');
-            });
+                }
+                
+                // 送信ボタンを無効化して重複送信を防止
+                document.getElementById('submitButton').disabled = true;
+                document.getElementById('submitButton').textContent = "送信中...";
+                
+                // ここでデータをGoogle Apps Scriptに送信
+                // Google Apps ScriptのWebアプリケーションURL
+                fetch('https://script.google.com/macros/s/AKfycbzXoDGDjHmWm80e-6rSiVLJpktfN7UBS55tAe03ZHs-ZV-m1mZa87FG8FunV50184o/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formObject)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 送信成功時の処理
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('myForm').style.display = 'none';
+                    
+                    // 3秒後にLINEアプリに戻る（オプション）
+                    setTimeout(() => {
+                        if (liff.isInClient()) {
+                            liff.closeWindow();
+                        }
+                    }, 3000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('errorMessage').textContent = "送信エラー: " + error.message;
+                    document.getElementById('errorMessage').style.display = 'block';
+                    
+                    // エラー時にボタンを再度有効化
+                    document.getElementById('submitButton').disabled = false;
+                    document.getElementById('submitButton').textContent = "送信する";
+                });
+            } catch (error) {
+                console.error('Form submission error:', error);
+                document.getElementById('errorMessage').textContent = "送信処理エラー: " + error.message;
+                document.getElementById('errorMessage').style.display = 'block';
+                
+                // エラー時にボタンを再度有効化
+                document.getElementById('submitButton').disabled = false;
+                document.getElementById('submitButton').textContent = "送信する";
+            }
         });
     </script>
 </body>
