@@ -115,27 +115,6 @@
             display: inline-block;
             width: auto;
         }
-
-        .loading-indicator {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #06c755;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -146,16 +125,12 @@
             <!-- エラーメッセージがここに表示されます -->
         </div>
 
-        <div id="loadingIndicator" class="loading-indicator">
-            <div class="loader"></div>
-            <p>処理中...</p>
-        </div>
-
         <div id="profile-area" class="profile-info" style="display: none;">
             <p>こんにちは <span id="profile-name" class="profile-name"></span> さん</p>
         </div>
 
-        <form id="myForm">
+        <!-- 通常のフォーム - 直接Google Apps Scriptに送信 -->
+        <form id="myForm" method="get" action="https://script.google.com/macros/s/AKfycbw1czTvI0Sz-IHK4CXYCh7_ICUw95rGWt2wsc2zBZNCsN5q3aOctQBk_k2wKqQxnso8/exec" onsubmit="return prepareSubmit()">
             <div class="form-group">
                 <label>お名前<span class="required">*</span></label>
                 <input type="text" id="name" name="name" required>
@@ -205,20 +180,20 @@
                 <textarea id="message" name="message" rows="4"></textarea>
             </div>
 
+            <!-- 非表示のユーザーID欄 -->
+            <input type="hidden" id="userId" name="userId" value="">
+            <!-- リダイレクト先 -->
+            <input type="hidden" name="redirect" value="https://kamidai85.github.io/line-miniapp/thanks.html">
+
             <button type="submit" id="submitButton">送信する</button>
         </form>
 
         <div id="successMessage" class="success-message">
-            送信が完了しました。ありがとうございました！
+            送信中です。しばらくお待ちください...
         </div>
     </div>
 
     <script>
-        // ローディング表示の切り替え
-        function toggleLoading(show) {
-            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
-        }
-        
         // エラーメッセージを表示する関数
         function showError(message, withRetry = true) {
             const errorDiv = document.createElement('div');
@@ -235,9 +210,11 @@
                 retryButton.textContent = '再試行';
                 retryButton.onclick = function() {
                     container.innerHTML = '';
+                    // フォーム送信の場合は何もしない
                     if (message.includes('送信エラー')) {
-                        // 送信をやり直す
-                        submitForm();
+                        // フォームを再表示
+                        document.getElementById('myForm').style.display = 'block';
+                        document.getElementById('submitButton').disabled = false;
                     } else {
                         // LIFFを再初期化
                         initializeLiff();
@@ -262,6 +239,17 @@
                     
                     // プロフィールエリアを表示
                     document.getElementById('profile-area').style.display = 'block';
+                    
+                    // LINEのユーザーIDを取得して設定
+                    try {
+                        const idToken = liff.getDecodedIDToken();
+                        if (idToken && idToken.sub) {
+                            document.getElementById('userId').value = idToken.sub;
+                            console.log("ユーザーID設定完了");
+                        }
+                    } catch (e) {
+                        console.error("ユーザーID取得エラー:", e);
+                    }
                 })
                 .catch(err => {
                     console.error("プロフィール取得エラー:", err);
@@ -271,7 +259,6 @@
         
         // LIFF初期化関数
         function initializeLiff() {
-            toggleLoading(true);
             console.log("LIFF初期化開始");
             
             // 正確なLIFF ID - URLから取得
@@ -282,7 +269,6 @@
             liff.init({ liffId: liffId })
                 .then(() => {
                     console.log("LIFF初期化成功");
-                    toggleLoading(false);
                     
                     // LINEにログインしているか確認
                     if (liff.isLoggedIn()) {
@@ -296,148 +282,25 @@
                     }
                 })
                 .catch((err) => {
-                    toggleLoading(false);
                     console.error("LIFF初期化失敗:", err);
                     showError('LIFFの初期化に失敗しました。時間をおいて再度お試しください。');
                 });
         }
-
-        // フォーム送信関数（JSONP方式）
-        function submitForm() {
-            try {
-                console.log("フォーム送信処理開始");
-                toggleLoading(true);
-                
-                // エラーメッセージをクリア
-                document.getElementById('errorMessageContainer').innerHTML = '';
-                
-                // 送信ボタンを無効化して重複送信を防止
-                document.getElementById('submitButton').disabled = true;
-                document.getElementById('submitButton').textContent = "送信中...";
-                
-                // フォームデータを取得
-                const form = document.getElementById('myForm');
-                const formData = new FormData(form);
-                const formObject = {};
-                
-                for (let [key, value] of formData.entries()) {
-                    formObject[key] = value;
-                }
-                
-                // ユーザーIDを追加（LINEの場合）
-                if (liff.isLoggedIn()) {
-                    try {
-                        const idToken = liff.getDecodedIDToken();
-                        if (idToken && idToken.sub) {
-                            formObject.userId = idToken.sub;
-                        }
-                    } catch (e) {
-                        console.error("ユーザーID取得エラー:", e);
-                    }
-                }
-                
-                // タイムスタンプを追加
-                formObject.timestamp = new Date().toISOString();
-                
-                console.log("送信データ:", formObject);
-                
-                // URLSearchParamsを使用してクエリパラメータに変換
-                const params = new URLSearchParams();
-                
-                // データをクエリパラメータに追加
-                for (const key in formObject) {
-                    params.append(key, formObject[key]);
-                }
-                
-                // データ送信のためのscriptタグを作成
-                const script = document.createElement('script');
-                
-                // コールバック関数を定義
-                window.handleGASResponse = function(response) {
-                    toggleLoading(false);
-                    console.log("GASレスポンス:", response);
-                    
-                    if (response.result === 'success') {
-                        // 送信成功時の処理
-                        document.getElementById('successMessage').style.display = 'block';
-                        document.getElementById('myForm').style.display = 'none';
-                        
-                        // 3秒後にLINEアプリに戻る（LINEアプリ内の場合）
-                        setTimeout(() => {
-                            if (liff.isInClient()) {
-                                console.log("LINEアプリに戻ります");
-                                liff.closeWindow();
-                            }
-                        }, 3000);
-                    } else {
-                        // エラー処理
-                        showError('送信エラー: ' + (response.message || '不明なエラー'));
-                        
-                        // エラー時にボタンを再度有効化
-                        document.getElementById('submitButton').disabled = false;
-                        document.getElementById('submitButton').textContent = "送信する";
-                    }
-                    
-                    // 使用済みのscriptタグを削除
-                    document.body.removeChild(script);
-                    delete window.handleGASResponse;
-                };
-                
-                // タイムアウト処理
-                const timeoutId = setTimeout(() => {
-                    console.error("API呼び出しがタイムアウトしました");
-                    toggleLoading(false);
-                    showError('送信がタイムアウトしました。時間をおいて再度お試しください。');
-                    
-                    // エラー時にボタンを再度有効化
-                    document.getElementById('submitButton').disabled = false;
-                    document.getElementById('submitButton').textContent = "送信する";
-                    
-                    // タイムアウト時にもスクリプトを削除
-                    if (document.body.contains(script)) {
-                        document.body.removeChild(script);
-                    }
-                    delete window.handleGASResponse;
-                }, 15000); // 15秒でタイムアウト
-                
-                // JSONP呼び出し用のURLを作成
-                script.src = `https://script.google.com/macros/s/AKfycbw1czTvI0Sz-IHK4CXYCh7_ICUw95rGWt2wsc2zBZNCsN5q3aOctQBk_k2wKqQxnso8/exec?${params.toString()}&callback=handleGASResponse`;
-                
-                // スクリプトのロードエラーハンドリング
-                script.onerror = function() {
-                    clearTimeout(timeoutId);
-                    console.error("スクリプトのロードに失敗しました");
-                    toggleLoading(false);
-                    showError('送信エラー: APIの呼び出しに失敗しました');
-                    
-                    // エラー時にボタンを再度有効化
-                    document.getElementById('submitButton').disabled = false;
-                    document.getElementById('submitButton').textContent = "送信する";
-                    
-                    // エラー時にもスクリプトを削除
-                    document.body.removeChild(script);
-                    delete window.handleGASResponse;
-                };
-                
-                // スクリプトをページに追加して実行
-                document.body.appendChild(script);
-                
-            } catch (error) {
-                toggleLoading(false);
-                console.error('送信処理エラー:', error);
-                showError('送信処理エラー: ' + error.message);
-                
-                // エラー時にボタンを再度有効化
-                document.getElementById('submitButton').disabled = false;
-                document.getElementById('submitButton').textContent = "送信する";
-            }
-        }
         
-        // フォーム送信イベント
-        document.getElementById('myForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            submitForm();
-        });
+        // フォーム送信前の処理
+        function prepareSubmit() {
+            console.log("フォーム送信準備");
+            // 送信ボタンを無効化
+            document.getElementById('submitButton').disabled = true;
+            document.getElementById('submitButton').textContent = "送信中...";
+            
+            // フォームを非表示にして送信中メッセージを表示
+            document.getElementById('myForm').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // 送信を許可
+            return true;
+        }
         
         // 初期化
         document.addEventListener('DOMContentLoaded', function() {
