@@ -90,13 +90,18 @@
         }
 
         .error-message {
-            display: none;
             background-color: #f8d7da;
             color: #721c24;
             padding: 15px;
             border-radius: 4px;
-            margin-top: 20px;
+            margin-bottom: 20px;
             text-align: center;
+        }
+
+        .debug-info {
+            font-size: 12px;
+            margin-top: 20px;
+            color: #6c757d;
         }
     </style>
 </head>
@@ -104,11 +109,13 @@
     <div class="form-container">
         <h1>請見積書作成フォーム</h1>
         
+        <div id="errorMessageContainer">
+            <!-- エラーメッセージがここに表示されます -->
+        </div>
+
         <div id="profile-area" class="profile-info" style="display: none;">
             <p>こんにちは <span id="profile-name" class="profile-name"></span> さん</p>
         </div>
-
-        <div id="errorMessage" class="error-message"></div>
 
         <form id="myForm">
             <div class="form-group">
@@ -166,36 +173,71 @@
         <div id="successMessage" class="success-message">
             送信が完了しました。ありがとうございました！
         </div>
+        
+        <div class="debug-info" id="debugInfo"></div>
     </div>
 
     <script>
+        // エラーメッセージを表示する関数
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            const container = document.getElementById('errorMessageContainer');
+            container.innerHTML = '';
+            container.appendChild(errorDiv);
+        }
+        
+        // デバッグ情報を表示する関数
+        function addDebugInfo(message) {
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.innerHTML += message + '<br>';
+        }
+        
         // LIFFの初期化
         document.addEventListener('DOMContentLoaded', function() {
-            // LIFF IDを設定
-            const liffId = "2007092175";
+            // デバッグ情報
+            addDebugInfo('LIFF SDK読み込み: ' + (typeof liff !== 'undefined' ? '成功' : '失敗'));
             
-            liff.init({
-                liffId: liffId
-            }).then(() => {
-                console.log("LIFF initialized!");
-                // LINEにログインしているか確認
-                if (liff.isLoggedIn()) {
-                    // ユーザープロフィールを取得
-                    fetchUserProfile();
-                } else {
-                    // ログインしていない場合はログインを促す
-                    liff.login();
-                }
-            }).catch((err) => {
-                console.error("LIFF initialization failed", err);
-                document.getElementById('errorMessage').textContent = "LIFF初期化エラー: " + err.message;
-                document.getElementById('errorMessage').style.display = 'block';
-            });
+            try {
+                // LIFF IDを設定
+                const liffId = "2007092173";
+                
+                addDebugInfo('LIFF初期化開始: ID = ' + liffId);
+                
+                liff.init({
+                    liffId: liffId
+                }).then(() => {
+                    addDebugInfo('LIFF初期化成功');
+                    
+                    // LINEにログインしているか確認
+                    if (liff.isLoggedIn()) {
+                        addDebugInfo('LINEログイン済み');
+                        // ユーザープロフィールを取得
+                        fetchUserProfile();
+                    } else {
+                        addDebugInfo('未ログイン状態、ログイン処理開始');
+                        // ログインしていない場合はログインを促す
+                        liff.login();
+                    }
+                }).catch((err) => {
+                    addDebugInfo('LIFF初期化エラー: ' + err.message);
+                    showError('LIFF初期化エラー: ' + err.message);
+                    console.error("LIFF initialization failed", err);
+                });
+            } catch (e) {
+                addDebugInfo('例外が発生: ' + e.message);
+                showError('初期化中にエラーが発生しました: ' + e.message);
+                console.error('Init error:', e);
+            }
         });
 
         // ユーザープロフィールを取得する関数
         function fetchUserProfile() {
             liff.getProfile().then(profile => {
+                addDebugInfo('プロフィール取得成功: ' + profile.displayName);
+                
                 const profileNameElement = document.getElementById('profile-name');
                 profileNameElement.textContent = profile.displayName;
                 
@@ -205,6 +247,7 @@
                 // プロフィールエリアを表示
                 document.getElementById('profile-area').style.display = 'block';
             }).catch(err => {
+                addDebugInfo('プロフィール取得エラー: ' + err.message);
                 console.error("Error getting profile", err);
             });
         }
@@ -214,12 +257,15 @@
             event.preventDefault();
             
             try {
+                addDebugInfo('フォーム送信処理開始');
+                
                 // フォームデータの収集
                 const formData = new FormData(this);
                 const formObject = {};
                 
                 for (let [key, value] of formData.entries()) {
                     formObject[key] = value;
+                    addDebugInfo('フォームデータ: ' + key + ' = ' + value);
                 }
                 
                 // ユーザーIDを追加（LINEの場合）
@@ -228,8 +274,10 @@
                         const idToken = liff.getDecodedIDToken();
                         if (idToken) {
                             formObject.userId = idToken.sub;
+                            addDebugInfo('ユーザーID取得: ' + idToken.sub.substring(0, 5) + '...');
                         }
                     } catch (e) {
+                        addDebugInfo('ユーザーID取得エラー: ' + e.message);
                         console.error("Error getting user ID:", e);
                     }
                 }
@@ -237,6 +285,8 @@
                 // 送信ボタンを無効化して重複送信を防止
                 document.getElementById('submitButton').disabled = true;
                 document.getElementById('submitButton').textContent = "送信中...";
+                
+                addDebugInfo('Google Apps Scriptに送信開始');
                 
                 // ここでデータをGoogle Apps Scriptに送信
                 // Google Apps ScriptのWebアプリケーションURL
@@ -248,12 +298,16 @@
                     body: JSON.stringify(formObject)
                 })
                 .then(response => {
+                    addDebugInfo('サーバーレスポンス受信: ' + response.status);
+                    
                     if (!response.ok) {
                         throw new Error('Network response was not ok: ' + response.status);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    addDebugInfo('送信成功');
+                    
                     // 送信成功時の処理
                     document.getElementById('successMessage').style.display = 'block';
                     document.getElementById('myForm').style.display = 'none';
@@ -261,23 +315,24 @@
                     // 3秒後にLINEアプリに戻る（オプション）
                     setTimeout(() => {
                         if (liff.isInClient()) {
+                            addDebugInfo('LINEアプリに戻ります');
                             liff.closeWindow();
                         }
                     }, 3000);
                 })
                 .catch(error => {
+                    addDebugInfo('送信エラー: ' + error.message);
+                    showError('送信エラー: ' + error.message);
                     console.error('Error:', error);
-                    document.getElementById('errorMessage').textContent = "送信エラー: " + error.message;
-                    document.getElementById('errorMessage').style.display = 'block';
                     
                     // エラー時にボタンを再度有効化
                     document.getElementById('submitButton').disabled = false;
                     document.getElementById('submitButton').textContent = "送信する";
                 });
             } catch (error) {
+                addDebugInfo('送信処理エラー: ' + error.message);
+                showError('送信処理エラー: ' + error.message);
                 console.error('Form submission error:', error);
-                document.getElementById('errorMessage').textContent = "送信処理エラー: " + error.message;
-                document.getElementById('errorMessage').style.display = 'block';
                 
                 // エラー時にボタンを再度有効化
                 document.getElementById('submitButton').disabled = false;
