@@ -115,6 +115,27 @@
             display: inline-block;
             width: auto;
         }
+
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #06c755;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -123,6 +144,11 @@
         
         <div id="errorMessageContainer">
             <!-- エラーメッセージがここに表示されます -->
+        </div>
+
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="loader"></div>
+            <p>処理中...</p>
         </div>
 
         <div id="profile-area" class="profile-info" style="display: none;">
@@ -188,6 +214,11 @@
     </div>
 
     <script>
+        // ローディング表示の切り替え
+        function toggleLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+        
         // エラーメッセージを表示する関数
         function showError(message, withRetry = true) {
             const errorDiv = document.createElement('div');
@@ -215,6 +246,8 @@
         function fetchUserProfile() {
             liff.getProfile()
                 .then(profile => {
+                    console.log("プロフィール取得成功:", profile.displayName);
+                    
                     const profileNameElement = document.getElementById('profile-name');
                     profileNameElement.textContent = profile.displayName;
                     
@@ -232,12 +265,18 @@
         
         // LIFF初期化関数
         function initializeLiff() {
-            // 正確なLIFF ID (miniappのURLから確認)
-            const liffId = "1657860433-xj1RokLP";
+            toggleLoading(true);
+            console.log("LIFF初期化開始");
+            
+            // 正確なLIFF ID - URLから取得
+            const liffId = "2007092175-ZRreRvez";
+            
+            console.log("使用するLIFF ID:", liffId);
             
             liff.init({ liffId: liffId })
                 .then(() => {
                     console.log("LIFF初期化成功");
+                    toggleLoading(false);
                     
                     // LINEにログインしているか確認
                     if (liff.isLoggedIn()) {
@@ -251,6 +290,7 @@
                     }
                 })
                 .catch((err) => {
+                    toggleLoading(false);
                     console.error("LIFF初期化失敗:", err);
                     showError('LIFFの初期化に失敗しました。時間をおいて再度お試しください。');
                 });
@@ -261,12 +301,16 @@
             event.preventDefault();
             
             try {
+                console.log("フォーム送信処理開始");
+                toggleLoading(true);
+                
                 // フォームデータの収集
                 const formData = new FormData(this);
                 const formObject = {};
                 
                 for (let [key, value] of formData.entries()) {
                     formObject[key] = value;
+                    console.log("フォームデータ:", key, "=", value);
                 }
                 
                 // ユーザーIDを追加（LINEの場合）
@@ -275,6 +319,7 @@
                         const idToken = liff.getDecodedIDToken();
                         if (idToken && idToken.sub) {
                             formObject.userId = idToken.sub;
+                            console.log("ユーザーID取得成功");
                         }
                     } catch (e) {
                         console.error("ユーザーID取得エラー:", e);
@@ -284,6 +329,8 @@
                 // 送信ボタンを無効化して重複送信を防止
                 document.getElementById('submitButton').disabled = true;
                 document.getElementById('submitButton').textContent = "送信中...";
+                
+                console.log("Google Apps Scriptに送信開始");
                 
                 // Google Apps Scriptにデータを送信
                 fetch('https://script.google.com/macros/s/AKfycbxRc_jkkSn6VAJK-MkONDfwm5lVvr16rXsm4Npl73MtT1FewryTamaQdEbqPP7YPT0w/exec', {
@@ -295,12 +342,17 @@
                     body: JSON.stringify(formObject)
                 })
                 .then(response => {
+                    toggleLoading(false);
+                    console.log("サーバーレスポンス:", response.status);
+                    
                     if (!response.ok) {
                         throw new Error('サーバーエラー: ' + response.status);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log("送信成功:", data);
+                    
                     if (data.result === 'error') {
                         throw new Error(data.message || 'サーバーでエラーが発生しました');
                     }
@@ -312,11 +364,13 @@
                     // 3秒後にLINEアプリに戻る（LINEアプリ内の場合）
                     setTimeout(() => {
                         if (liff.isInClient()) {
+                            console.log("LINEアプリに戻ります");
                             liff.closeWindow();
                         }
                     }, 3000);
                 })
                 .catch(error => {
+                    toggleLoading(false);
                     console.error('送信エラー:', error);
                     showError('送信エラー: ' + error.message);
                     
@@ -325,6 +379,7 @@
                     document.getElementById('submitButton').textContent = "送信する";
                 });
             } catch (error) {
+                toggleLoading(false);
                 console.error('送信処理エラー:', error);
                 showError('送信処理エラー: ' + error.message);
                 
@@ -335,7 +390,10 @@
         });
         
         // 初期化
-        document.addEventListener('DOMContentLoaded', initializeLiff);
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM読み込み完了、LIFF初期化を開始します");
+            initializeLiff();
+        });
     </script>
 </body>
 </html>
