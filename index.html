@@ -1,312 +1,131 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIFFフォーム</title>
-    <!-- LIFFのJavaScriptを読み込む -->
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-        body {
-            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-            margin: 0;
-            padding: 16px;
-            background-color: #f7f7f7;
-        }
-
-        .form-container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #06c755;
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .required {
-            color: red;
-            margin-left: 3px;
-        }
-
-        button {
-            background-color: #06c755;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 12px 20px;
-            font-size: 16px;
-            width: 100%;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background-color: #05a847;
-        }
-
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        .success-message {
-            display: none;
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .profile-info {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-
-        .profile-name {
-            font-weight: bold;
-        }
-
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .retry-button {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-            display: inline-block;
-            width: auto;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>見積もり情報フォーム</title>
+  <style>
+    body {
+      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .form-header {
+      text-align: center;
+      color: #06c755;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .required:after {
+      content: " *";
+      color: red;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    textarea {
+      height: 120px;
+    }
+    .submit-btn {
+      background-color: #06c755;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+    .submit-btn:hover {
+      background-color: #05a649;
+    }
+  </style>
 </head>
 <body>
-    <div class="form-container">
-        <h1>請見積書作成フォーム</h1>
-        
-        <div id="errorMessageContainer">
-            <!-- エラーメッセージがここに表示されます -->
-        </div>
-
-        <div id="profile-area" class="profile-info" style="display: none;">
-            <p>こんにちは <span id="profile-name" class="profile-name"></span> さん</p>
-        </div>
-
-        <!-- 通常のフォーム - 直接Google Apps Scriptに送信 -->
-        <form id="myForm" method="get" action="https://script.google.com/macros/s/AKfycbzt3SqqkfUB6W7SWzBckHR0hb-7CK439pIuFvaCQuatQxMI0LvDN4N6ZCnbDRob-rME/exec="return prepareSubmit()">
-            <div class="form-group">
-                <label>お名前<span class="required">*</span></label>
-                <input type="text" id="name" name="name" required>
-            </div>
-
-            <div class="form-group">
-                <label>メールアドレス<span class="required">*</span></label>
-                <input type="email" id="email" name="email" required>
-            </div>
-
-            <div class="form-group">
-                <label>電話番号<span class="required">*</span></label>
-                <input type="tel" id="phone" name="phone" required>
-            </div>
-
-            <div class="form-group">
-                <label>ご住所<span class="required">*</span></label>
-                <input type="text" id="address" name="address" required>
-            </div>
-
-            <div class="form-group">
-                <label>ご希望の工事<span class="required">*</span></label>
-                <select id="serviceType" name="serviceType" required>
-                    <option value="">選択してください</option>
-                    <option value="全面リノベーション">全面リノベーション</option>
-                    <option value="キッチンリフォーム">キッチンリフォーム</option>
-                    <option value="バスルームリフォーム">バスルームリフォーム</option>
-                    <option value="トイレリフォーム">トイレリフォーム</option>
-                    <option value="その他">その他</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>ご予算の目安</label>
-                <select id="budget" name="budget">
-                    <option value="">選択してください</option>
-                    <option value="100万円未満">100万円未満</option>
-                    <option value="100〜300万円">100〜300万円</option>
-                    <option value="300〜500万円">300〜500万円</option>
-                    <option value="500〜1,000万円">500〜1,000万円</option>
-                    <option value="1,000万円以上">1,000万円以上</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>ご要望・質問など</label>
-                <textarea id="message" name="message" rows="4"></textarea>
-            </div>
-
-            <!-- 非表示のユーザーID欄 -->
-            <input type="hidden" id="userId" name="userId" value="">
-            <!-- リダイレクト先 -->
-            <input type="hidden" name="redirect" value="https://kamidai85.github.io/line-miniapp/thanks.html">
-
-            <button type="submit" id="submitButton">送信する</button>
-        </form>
-
-        <div id="successMessage" class="success-message">
-            送信中です。しばらくお待ちください...
-        </div>
+  <div class="form-header">
+    <h1>見積もり情報フォーム</h1>
+  </div>
+  
+  <form id="quoteForm" method="GET" action="あなたのGoogleAppsScriptのURL">
+    <div class="form-group">
+      <label for="customerName" class="required">お客様氏名</label>
+      <input type="text" id="customerName" name="customerName" required>
     </div>
-
-    <script>
-        // エラーメッセージを表示する関数
-        function showError(message, withRetry = true) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = message;
-            
-            const container = document.getElementById('errorMessageContainer');
-            container.innerHTML = '';
-            container.appendChild(errorDiv);
-            
-            if (withRetry) {
-                const retryButton = document.createElement('button');
-                retryButton.className = 'retry-button';
-                retryButton.textContent = '再試行';
-                retryButton.onclick = function() {
-                    container.innerHTML = '';
-                    // フォーム送信の場合は何もしない
-                    if (message.includes('送信エラー')) {
-                        // フォームを再表示
-                        document.getElementById('myForm').style.display = 'block';
-                        document.getElementById('submitButton').disabled = false;
-                    } else {
-                        // LIFFを再初期化
-                        initializeLiff();
-                    }
-                };
-                errorDiv.appendChild(document.createElement('br'));
-                errorDiv.appendChild(retryButton);
-            }
-        }
-
-        // ユーザープロフィールを取得する関数
-        function fetchUserProfile() {
-            liff.getProfile()
-                .then(profile => {
-                    console.log("プロフィール取得成功:", profile.displayName);
-                    
-                    const profileNameElement = document.getElementById('profile-name');
-                    profileNameElement.textContent = profile.displayName;
-                    
-                    // ユーザー名を自動的にフォームに設定
-                    document.getElementById('name').value = profile.displayName;
-                    
-                    // プロフィールエリアを表示
-                    document.getElementById('profile-area').style.display = 'block';
-                    
-                    // LINEのユーザーIDを取得して設定
-                    try {
-                        const idToken = liff.getDecodedIDToken();
-                        if (idToken && idToken.sub) {
-                            document.getElementById('userId').value = idToken.sub;
-                            console.log("ユーザーID設定完了");
-                        }
-                    } catch (e) {
-                        console.error("ユーザーID取得エラー:", e);
-                    }
-                })
-                .catch(err => {
-                    console.error("プロフィール取得エラー:", err);
-                    // プロフィール取得に失敗してもフォームは表示する
-                });
-        }
-        
-        // LIFF初期化関数
-        function initializeLiff() {
-            console.log("LIFF初期化開始");
-            
-            // 正確なLIFF ID - URLから取得
-            const liffId = "2007092175-ZRreRvez";
-            
-            console.log("使用するLIFF ID:", liffId);
-            
-            liff.init({ liffId: liffId })
-                .then(() => {
-                    console.log("LIFF初期化成功");
-                    
-                    // LINEにログインしているか確認
-                    if (liff.isLoggedIn()) {
-                        console.log("LINEログイン済み");
-                        // ユーザープロフィールを取得
-                        fetchUserProfile();
-                    } else {
-                        console.log("未ログイン状態、ログイン処理開始");
-                        // ログインしていない場合はログインを促す
-                        liff.login();
-                    }
-                })
-                .catch((err) => {
-                    console.error("LIFF初期化失敗:", err);
-                    showError('LIFFの初期化に失敗しました。時間をおいて再度お試しください。');
-                });
-        }
-        
-        // フォーム送信前の処理
-        function prepareSubmit() {
-            console.log("フォーム送信準備");
-            // 送信ボタンを無効化
-            document.getElementById('submitButton').disabled = true;
-            document.getElementById('submitButton').textContent = "送信中...";
-            
-            // フォームを非表示にして送信中メッセージを表示
-            document.getElementById('myForm').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'block';
-            
-            // 送信を許可
-            return true;
-        }
-        
-        // 初期化
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM読み込み完了、LIFF初期化を開始します");
-            initializeLiff();
-        });
-    </script>
+    
+    <div class="form-group">
+      <label for="quoteNumber" class="required">見積番号</label>
+      <input type="text" id="quoteNumber" name="quoteNumber" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="quoteDate" class="required">見積もり作成日</label>
+      <input type="date" id="quoteDate" name="quoteDate" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="amount" class="required">金額</label>
+      <input type="number" id="amount" name="amount" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="subject" class="required">件名</label>
+      <input type="text" id="subject" name="subject" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="paymentTerms">支払い条件</label>
+      <select id="paymentTerms" name="paymentTerms">
+        <option value="">選択してください</option>
+        <option value="現金一括">現金一括</option>
+        <option value="分割払い">分割払い</option>
+        <option value="契約時支払い">契約時支払い</option>
+        <option value="完了後支払い">完了後支払い</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="constructionSite" class="required">工事場所</label>
+      <input type="text" id="constructionSite" name="constructionSite" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="content" class="required">内容</label>
+      <textarea id="content" name="content" required></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label for="remarks">備考</label>
+      <textarea id="remarks" name="remarks"></textarea>
+    </div>
+    
+    <!-- ユーザーIDは必要に応じて非表示で送信 -->
+    <input type="hidden" id="userId" name="userId" value="ユーザーID">
+    
+    <!-- リダイレクト先を指定する場合 -->
+    <input type="hidden" name="redirect" value="">
+    
+    <div class="form-group">
+      <button type="submit" class="submit-btn">送信する</button>
+    </div>
+  </form>
 </body>
 </html>
