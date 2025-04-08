@@ -1,96 +1,134 @@
-// 項目行の追加
-function addItemRow(formPrefix) {
-  try {
-    const container = document.getElementById(`${formPrefix}-items-container`);
-    const rowIndex = Date.now(); // 一意のIDを生成
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>見積もり情報フォーム</title>
+  <style>
+    body {
+      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .form-header {
+      text-align: center;
+      color: 
+#06c755;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .required:after {
+      content: " *";
+      color: red;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    textarea {
+      height: 120px;
+    }
+    .submit-btn {
+      background-color: 
+#06c755;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+    .submit-btn:hover {
+      background-color: 
+#05a649;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-header">
+    <h1>見積もり情報フォーム</h1>
+  </div>
 
-    const row = document.createElement('div');
-    row.className = 'item-row';
-    row.setAttribute('data-index', rowIndex);
-    row.innerHTML = `
-      <div>
-        <label class="required" for="${formPrefix}-item-name-${rowIndex}">項目名</label>
-        <input type="text" id="${formPrefix}-item-name-${rowIndex}" class="item-name" required>
-      </div>
-      <div>
-        <label class="required" for="${formPrefix}-item-quantity-${rowIndex}">数量</label>
-        <input type="number" id="${formPrefix}-item-quantity-${rowIndex}" class="item-quantity" min="1" value="1" required>
-      </div>
-      <div>
-        <label class="required" for="${formPrefix}-item-unit-${rowIndex}">単位</label>
-        <input type="text" id="${formPrefix}-item-unit-${rowIndex}" class="item-unit" value="個" required>
-      </div>
-      <div>
-        <label class="required" for="${formPrefix}-item-price-${rowIndex}">単価</label>
-        <input type="number" id="${formPrefix}-item-price-${rowIndex}" class="item-price" min="0" value="0" required>
-      </div>
-      <div>
-        <label for="${formPrefix}-item-subtotal-${rowIndex}">小計</label>
-        <input type="text" id="${formPrefix}-item-subtotal-${rowIndex}" class="item-subtotal" value="0円" readonly>
-      </div>
-      <button type="button" class="remove-item">削除</button>
-    `;
+  <form id="quoteForm" method="GET" action="あなたのGoogleAppsScriptのURL">
+    <div class="form-group">
+      <label for="customerName" class="required">お客様氏名</label>
+      <input type="text" id="customerName" name="customerName" required>
+    </div>
 
-    container.appendChild(row);
+    <div class="form-group">
+      <label for="quoteNumber" class="required">見積番号</label>
+      <input type="text" id="quoteNumber" name="quoteNumber" required>
+    </div>
 
-    // 入力イベントリスナー追加
-    ['quantity', 'price'].forEach(field => {
-      row.querySelector(`.item-${field}`).addEventListener('input', () => {
-        calculateItemSubtotal(formPrefix, rowIndex);
-        updateTotals(formPrefix);
-      });
-    });
+    <div class="form-group">
+      <label for="quoteDate" class="required">見積もり作成日</label>
+      <input type="date" id="quoteDate" name="quoteDate" required>
+    </div>
 
-    // 削除ボタンのイベントリスナー
-    row.querySelector('.remove-item').addEventListener('click', () => {
-      if (container.children.length > 1) {
-        row.remove();
-        updateTotals(formPrefix);
-      } else {
-        alert('少なくとも1つの項目が必要です');
-      }
-    });
+    <div class="form-group">
+      <label for="amount" class="required">金額</label>
+      <input type="number" id="amount" name="amount" required>
+    </div>
 
-    calculateItemSubtotal(formPrefix, rowIndex);
-    updateTotals(formPrefix);
+    <div class="form-group">
+      <label for="subject" class="required">件名</label>
+      <input type="text" id="subject" name="subject" required>
+    </div>
 
-  } catch (err) {
-    console.error('項目追加エラー:', err);
-  }
-}
+    <div class="form-group">
+      <label for="paymentTerms">支払い条件</label>
+      <select id="paymentTerms" name="paymentTerms">
+        <option value="">選択してください</option>
+        <option value="現金一括">現金一括</option>
+        <option value="分割払い">分割払い</option>
+        <option value="契約時支払い">契約時支払い</option>
+        <option value="完了後支払い">完了後支払い</option>
+      </select>
+    </div>
 
-// 項目の小計計算
-function calculateItemSubtotal(formPrefix, rowIndex) {
-  const quantity = parseFloat(document.getElementById(`${formPrefix}-item-quantity-${rowIndex}`).value) || 0;
-  const price = parseFloat(document.getElementById(`${formPrefix}-item-price-${rowIndex}`).value) || 0;
-  const subtotal = quantity * price;
-  document.getElementById(`${formPrefix}-item-subtotal-${rowIndex}`).value = formatCurrency(subtotal);
-}
+    <div class="form-group">
+      <label for="constructionSite" class="required">工事場所</label>
+      <input type="text" id="constructionSite" name="constructionSite" required>
+    </div>
 
-// 合計計算
-function updateTotals(formPrefix) {
-  const container = document.getElementById(`${formPrefix}-items-container`);
-  let subtotal = 0;
+    <div class="form-group">
+      <label for="content" class="required">内容</label>
+      <textarea id="content" name="content" required></textarea>
+    </div>
 
-  Array.from(container.children).forEach(row => {
-    const rowIndex = row.getAttribute('data-index');
-    const quantity = parseFloat(document.getElementById(`${formPrefix}-item-quantity-${rowIndex}`).value) || 0;
-    const price = parseFloat(document.getElementById(`${formPrefix}-item-price-${rowIndex}`).value) || 0;
-    subtotal += quantity * price;
-  });
+    <div class="form-group">
+      <label for="remarks">備考</label>
+      <textarea id="remarks" name="remarks"></textarea>
+    </div>
 
-  const taxRate = parseFloat(document.getElementById(`${formPrefix}-tax-rate`).value) || 0;
-  const taxAmount = subtotal * (taxRate / 100);
-  const total = subtotal + taxAmount;
+    <!-- ユーザーIDは必要に応じて非表示で送信 -->
+    <input type="hidden" id="userId" name="userId" value="ユーザーID">
 
-  document.getElementById(`${formPrefix}-subtotal`).textContent = formatCurrency(subtotal);
-  document.getElementById(`${formPrefix}-tax-amount`).textContent = formatCurrency(taxAmount);
-  document.getElementById(`${formPrefix}-total-amount`).textContent = formatCurrency(total);
+    <!-- リダイレクト先を指定する場合 -->
+    <input type="hidden" name="redirect" value="">
 
-  document.getElementById(`${formPrefix}-amount`).value = total;
-}
-
-// 通貨フォーマット
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount);
-}
+    <div class="form-group">
+      <button type="submit" class="submit-btn">送信する</button>
+    </div>
+  </form>
+</body>
+</html>
