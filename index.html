@@ -1,33 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>見積もり情報フォーム</title>
+  <meta name="description" content="見積書・請求書・領収書作成フォーム">
+  <title>業務フォーム</title>
   <style>
+    :root {
+      --primary-color: #06c755;
+      --primary-dark: #05a649;
+      --error-color: #e53935;
+      --light-bg: #f5f5f5;
+      --border-color: #ddd;
+      --text-color: #333;
+      --text-light: #666;
+    }
+    
     body {
       font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
       padding: 20px;
       max-width: 800px;
       margin: 0 auto;
+      color: var(--text-color);
+      line-height: 1.6;
     }
+    
     .form-header {
       text-align: center;
-      color: #06c755;
-      margin-bottom: 30px;
+      color: var(--primary-color);
+      margin-bottom: 20px;
     }
+    
+    .tab-container {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      overflow-x: auto; /* モバイル対応 */
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      border-radius: 5px 5px 0 0;
+      cursor: pointer;
+      margin-right: 5px;
+      white-space: nowrap; /* モバイル対応 */
+      user-select: none; /* テキスト選択を防止 */
+    }
+    
+    .tab.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .tab:focus {
+      outline: 2px solid var(--primary-dark);
+      outline-offset: 2px;
+    }
+    
+    .form-container {
+      display: none;
+    }
+    
+    .form-container.active {
+      display: block;
+    }
+    
     .form-group {
       margin-bottom: 20px;
     }
+    
     label {
       display: block;
       font-weight: bold;
       margin-bottom: 5px;
     }
+    
     .required:after {
       content: " *";
-      color: red;
+      color: var(--error-color);
     }
+    
     input[type="text"],
     input[type="email"],
     input[type="tel"],
@@ -37,16 +93,42 @@
     select {
       width: 100%;
       padding: 10px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
       box-sizing: border-box;
       font-size: 16px;
     }
+    
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: 2px solid var(--primary-color);
+      border-color: var(--primary-color);
+    }
+    
+    input:invalid,
+    textarea:invalid,
+    select:invalid {
+      border-color: var(--error-color);
+    }
+    
+    .error-message {
+      color: var(--error-color);
+      font-size: 14px;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .show-error {
+      display: block;
+    }
+    
     textarea {
       height: 120px;
     }
+    
     .submit-btn {
-      background-color: #06c755;
+      background-color: var(--primary-color);
       color: white;
       border: none;
       padding: 12px 20px;
@@ -55,77 +137,902 @@
       font-size: 16px;
       width: 100%;
     }
+    
     .submit-btn:hover {
-      background-color: #05a649;
+      background-color: var(--primary-dark);
+    }
+    
+    .submit-btn:focus {
+      outline: 2px solid var(--primary-dark);
+      outline-offset: 2px;
+    }
+    
+    .submit-btn:disabled {
+      background-color: var(--border-color);
+      cursor: not-allowed;
+    }
+    
+    .form-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-light);
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .two-cols {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .two-cols > div {
+      flex: 1;
+    }
+    
+    .items-container {
+      border: 1px solid var(--border-color);
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    
+    .item-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    
+    .item-row input {
+      margin-bottom: 0;
+    }
+    
+    .remove-item {
+      background-color: var(--error-color);
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .add-item {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+    
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      font-weight: bold;
+      border-top: 1px solid var(--border-color);
+      padding-top: 10px;
+    }
+    
+    .data-link {
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: var(--light-bg);
+      border-radius: 4px;
+      text-align: center;
+    }
+    
+    .data-link button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    
+    @media (max-width: 600px) {
+      .two-cols {
+        flex-direction: column;
+      }
+      
+      .item-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .item-row > * {
+        margin-bottom: 5px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="form-header">
-    <h1>見積もり情報フォーム</h1>
+    <h1>業務フォーム</h1>
   </div>
   
-  <form id="quoteForm" method="GET" action="あなたのGoogleAppsScriptのURL">
-    <div class="form-group">
-      <label for="customerName" class="required">お客様氏名</label>
-      <input type="text" id="customerName" name="customerName" required>
-    </div>
+  <div class="tab-container" role="tablist">
+    <div class="tab active" role="tab" tabindex="0" aria-selected="true" aria-controls="quoteForm" data-form="quote" id="quoteTab">見積書</div>
+    <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="invoiceForm" data-form="invoice" id="invoiceTab">請求書</div>
+    <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="receiptForm" data-form="receipt" id="receiptTab">領収書</div>
+  </div>
+  
+  <!-- データ連携リンク（初期状態では非表示） -->
+  <div id="dataLinkContainer" class="data-link hidden">
+    <p>データを引き継いで別のフォームを作成:</p>
+    <div id="dataLinkButtons"></div>
+  </div>
+  
+  <!-- 見積書フォーム -->
+  <div id="quoteForm" class="form-container active" role="tabpanel" aria-labelledby="quoteTab">
+    <form method="POST" action="あなたのGoogleAppsScriptのURL" class="quote-form" novalidate>
+      <input type="hidden" name="formType" value="quote">
+      <input type="hidden" name="csrf_token" id="quote-csrf" value="">
+      
+      <div class="form-group">
+        <label for="quote-customerName" class="required">お客様氏名</label>
+        <input type="text" id="quote-customerName" name="customerName" required maxlength="100">
+        <div class="error-message" id="quote-customerName-error">お客様氏名を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="quote-quoteNumber" class="required">見積番号</label>
+        <input type="text" id="quote-quoteNumber" name="quoteNumber" required pattern="[A-Za-z0-9\-]+" maxlength="20">
+        <div class="error-message" id="quote-quoteNumber-error">有効な見積番号を入力してください（英数字、ハイフン）</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="quote-quoteDate" class="required">見積もり作成日</label>
+        <input type="date" id="quote-quoteDate" name="quoteDate" required>
+        <div class="error-message" id="quote-quoteDate-error">有効な日付を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="quote-validUntil">有効期限</label>
+        <input type="date" id="quote-validUntil" name="validUntil">
+      </div>
+      
+      <div class="form-group">
+        <label for="quote-subject" class="required">件名</label>
+        <input type="text" id="quote-subject" name="subject" required maxlength="200">
+        <div class="error-message" id="quote-subject-error">件名を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="quote-paymentTerms">支払い条件</label>
+        <select id="quote-paymentTerms" name="paymentTerms">
+          <div>
+            <label class="required" for="${formPrefix}-item-name-${rowIndex}">項目名</label>
+            <input type="text" id="${formPrefix}-item-name-${rowIndex}" class="item-name" required>
+          </div>
+          <div>
+            <label class="required" for="${formPrefix}-item-quantity-${rowIndex}">数量</label>
+            <input type="number" id="${formPrefix}-item-quantity-${rowIndex}" class="item-quantity" min="1" value="1" required>
+          </div>
+          <div>
+            <label class="required" for="${formPrefix}-item-unit-${rowIndex}">単位</label>
+            <input type="text" id="${formPrefix}-item-unit-${rowIndex}" class="item-unit" value="個" required>
+          </div>
+          <div>
+            <label class="required" for="${formPrefix}-item-price-${rowIndex}">単価</label>
+            <input type="number" id="${formPrefix}-item-price-${rowIndex}" class="item-price" min="0" value="0" required>
+          </div>
+          <div>
+            <label for="${formPrefix}-item-subtotal-${rowIndex}">小計</label>
+            <input type="text" id="${formPrefix}-item-subtotal-${rowIndex}" class="item-subtotal" value="0円" readonly>
+          </div>
+          <button type="button" class="remove-item" data-index="${rowIndex}">削除</button>
+        `;
+        
+        container.appendChild(row);
+        
+        // 行の入力要素にイベントリスナーを追加
+        const quantityInput = document.getElementById(`${formPrefix}-item-quantity-${rowIndex}`);
+        const priceInput = document.getElementById(`${formPrefix}-item-price-${rowIndex}`);
+        
+        quantityInput.addEventListener('input', () => {
+          calculateItemSubtotal(formPrefix, rowIndex);
+          updateTotals(formPrefix);
+        });
+        
+        priceInput.addEventListener('input', () => {
+          calculateItemSubtotal(formPrefix, rowIndex);
+          updateTotals(formPrefix);
+        });
+        
+        // 削除ボタンのイベントリスナー
+        row.querySelector('.remove-item').addEventListener('click', function() {
+          try {
+            if (container.children.length > 1) {
+              container.removeChild(row);
+              updateTotals(formPrefix);
+            } else {
+              alert('少なくとも1つの項目が必要です');
+            }
+          } catch (err) {
+            console.error('項目削除エラー:', err);
+          }
+        });
+        
+        // 消費税率変更時のイベントリスナー
+        document.getElementById(`${formPrefix}-tax-rate`).addEventListener('input', function() {
+          updateTotals(formPrefix);
+        });
+        
+        calculateItemSubtotal(formPrefix, rowIndex);
+        updateTotals(formPrefix);
+      } catch (err) {
+        console.error('項目行追加エラー:', err);
+      }
+    }
     
-    <div class="form-group">
-      <label for="quoteNumber" class="required">見積番号</label>
-      <input type="text" id="quoteNumber" name="quoteNumber" required>
-    </div>
+    // 項目ごとの小計計算
+    function calculateItemSubtotal(formPrefix, rowIndex) {
+      try {
+        const quantity = parseFloat(document.getElementById(`${formPrefix}-item-quantity-${rowIndex}`).value) || 0;
+        const price = parseFloat(document.getElementById(`${formPrefix}-item-price-${rowIndex}`).value) || 0;
+        const subtotal = quantity * price;
+        
+        document.getElementById(`${formPrefix}-item-subtotal-${rowIndex}`).value = formatCurrency(subtotal);
+      } catch (err) {
+        console.error('小計計算エラー:', err);
+      }
+    }
     
-    <div class="form-group">
-      <label for="quoteDate" class="required">見積もり作成日</label>
-      <input type="date" id="quoteDate" name="quoteDate" required>
-    </div>
+    // 合計金額の計算と更新
+    function updateTotals(formPrefix) {
+      try {
+        const container = document.getElementById(`${formPrefix}-items-container`);
+        let subtotal = 0;
+        
+        // 項目の小計を合算
+        const items = [];
+        Array.from(container.children).forEach((row, index) => {
+          const nameInput = document.getElementById(`${formPrefix}-item-name-${index}`);
+          const quantityInput = document.getElementById(`${formPrefix}-item-quantity-${index}`);
+          const unitInput = document.getElementById(`${formPrefix}-item-unit-${index}`);
+          const priceInput = document.getElementById(`${formPrefix}-item-price-${index}`);
+          
+          if (nameInput && quantityInput && priceInput) {
+            const name = nameInput.value;
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const unit = unitInput.value;
+            const price = parseFloat(priceInput.value) || 0;
+            const itemSubtotal = quantity * price;
+            
+            subtotal += itemSubtotal;
+            
+            // JSON用のデータ構造を作成
+            items.push({
+              name: name,
+              quantity: quantity,
+              unit: unit,
+              price: price,
+              subtotal: itemSubtotal
+            });
+          }
+        });
+        
+        // 消費税率と消費税額の計算
+        const taxRate = parseFloat(document.getElementById(`${formPrefix}-tax-rate`).value) || 0;
+        const taxAmount = subtotal * (taxRate / 100);
+        const total = subtotal + taxAmount;
+        
+        // 表示を更新
+        document.getElementById(`${formPrefix}-subtotal`).textContent = formatCurrency(subtotal);
+        document.getElementById(`${formPrefix}-tax-amount`).textContent = formatCurrency(taxAmount);
+        document.getElementById(`${formPrefix}-total-amount`).textContent = formatCurrency(total);
+        
+        // hidden項目に値を設定
+        document.getElementById(`${formPrefix}-amount`).value = total;
+        document.getElementById(`${formPrefix}-items-json`).value = JSON.stringify(items);
+        
+        // データ連携ボタンを表示
+        updateDataLinkButtons(formPrefix);
+      } catch (err) {
+        console.error('合計更新エラー:', err);
+      }
+    }
     
-    <div class="form-group">
-      <label for="amount" class="required">金額</label>
-      <input type="number" id="amount" name="amount" required>
-    </div>
+    // 通貨フォーマット
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount);
+    }
     
-    <div class="form-group">
-      <label for="subject" class="required">件名</label>
-      <input type="text" id="subject" name="subject" required>
-    </div>
+    // フォームバリデーション設定
+    function setupFormValidation(formClass) {
+      try {
+        const form = document.querySelector(`.${formClass}`);
+        
+        if (form) {
+          form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // 必須項目のチェック
+            form.querySelectorAll('[required]').forEach(input => {
+              if (!input.value.trim()) {
+                isValid = false;
+                showError(input);
+              } else {
+                hideError(input);
+              }
+            });
+            
+            // パターンチェック
+            form.querySelectorAll('[pattern]').forEach(input => {
+              if (input.value && !new RegExp(input.pattern).test(input.value)) {
+                isValid = false;
+                showError(input);
+              }
+            });
+            
+            // 項目行のチェック
+            const formPrefix = form.classList.contains('quote-form') ? 'quote' :
+                             form.classList.contains('invoice-form') ? 'invoice' : 'receipt';
+            
+            if (formPrefix === 'quote' || formPrefix === 'invoice') {
+              const container = document.getElementById(`${formPrefix}-items-container`);
+              
+              Array.from(container.children).forEach((row, index) => {
+                const nameInput = document.getElementById(`${formPrefix}-item-name-${index}`);
+                
+                if (nameInput && !nameInput.value.trim()) {
+                  isValid = false;
+                  showError(nameInput);
+                }
+              });
+            }
+            
+            if (!isValid) {
+              event.preventDefault();
+              alert('入力内容に誤りがあります。赤色で表示されている項目を確認してください。');
+            }
+          });
+        }
+      } catch (err) {
+        console.error('バリデーション設定エラー:', err);
+      }
+    }
     
-    <div class="form-group">
-      <label for="paymentTerms">支払い条件</label>
-      <select id="paymentTerms" name="paymentTerms">
-        <option value="">選択してください</option>
-        <option value="現金一括">現金一括</option>
-        <option value="分割払い">分割払い</option>
-        <option value="契約時支払い">契約時支払い</option>
-        <option value="完了後支払い">完了後支払い</option>
-      </select>
-    </div>
+    // エラー表示
+    function showError(input) {
+      input.classList.add('invalid');
+      
+      const errorId = input.id + '-error';
+      const errorElement = document.getElementById(errorId);
+      
+      if (errorElement) {
+        errorElement.classList.add('show-error');
+      }
+    }
     
-    <div class="form-group">
-      <label for="constructionSite" class="required">工事場所</label>
-      <input type="text" id="constructionSite" name="constructionSite" required>
-    </div>
+    // エラー非表示
+    function hideError(input) {
+      input.classList.remove('invalid');
+      
+      const errorId = input.id + '-error';
+      const errorElement = document.getElementById(errorId);
+      
+      if (errorElement) {
+        errorElement.classList.remove('show-error');
+      }
+    }
     
-    <div class="form-group">
-      <label for="content" class="required">内容</label>
-      <textarea id="content" name="content" required></textarea>
-    </div>
+    // データ連携ボタンの更新
+    function updateDataLinkButtons(currentFormType) {
+      try {
+        const container = document.getElementById('dataLinkContainer');
+        const buttonsContainer = document.getElementById('dataLinkButtons');
+        let hasData = false;
+        
+        // 現在のフォーム内容をチェック
+        if (currentFormType === 'quote' || currentFormType === 'invoice') {
+          const items = document.getElementById(`${currentFormType}-items-container`).children;
+          if (items.length > 0 && document.getElementById(`${currentFormType}-customerName`).value) {
+            hasData = true;
+          }
+        } else if (currentFormType === 'receipt') {
+          if (document.getElementById('receipt-customerName').value && 
+              document.getElementById('receipt-amount').value > 0) {
+            hasData = true;
+          }
+        }
+        
+        // データがある場合のみボタンを表示
+        if (hasData) {
+          container.classList.remove('hidden');
+          buttonsContainer.innerHTML = '';
+          
+          // 見積書 → 請求書、領収書
+          if (currentFormType === 'quote') {
+            const invoiceBtn = document.createElement('button');
+            invoiceBtn.textContent = '見積書→請求書';
+            invoiceBtn.addEventListener('click', () => {
+              copyDataBetweenForms('quote', 'invoice');
+              switchFormByName('invoice');
+            });
+            buttonsContainer.appendChild(invoiceBtn);
+            
+            const receiptBtn = document.createElement('button');
+            receiptBtn.textContent = '見積書→領収書';
+            receiptBtn.addEventListener('click', () => {
+              copyDataBetweenForms('quote', 'receipt');
+              switchFormByName('receipt');
+            });
+            buttonsContainer.appendChild(receiptBtn);
+          }
+          
+          // 請求書 → 領収書
+          else if (currentFormType === 'invoice') {
+            const receiptBtn = document.createElement('button');
+            receiptBtn.textContent = '請求書→領収書';
+            receiptBtn.addEventListener('click', () => {
+              copyDataBetweenForms('invoice', 'receipt');
+              switchFormByName('receipt');
+            });
+            buttonsContainer.appendChild(receiptBtn);
+          }
+        } else {
+          container.classList.add('hidden');
+        }
+      } catch (err) {
+        console.error('データ連携ボタン更新エラー:', err);
+      }
+    }
     
-    <div class="form-group">
-      <label for="remarks">備考</label>
-      <textarea id="remarks" name="remarks"></textarea>
-    </div>
+    // フォーム名での切り替え
+    function switchFormByName(formName) {
+      const tab = document.querySelector(`[data-form="${formName}"]`);
+      if (tab) {
+        switchTab(tab);
+      }
+    }
     
-    <!-- ユーザーIDは必要に応じて非表示で送信 -->
-    <input type="hidden" id="userId" name="userId" value="ユーザーID">
-    
-    <!-- リダイレクト先を指定する場合 -->
-    <input type="hidden" name="redirect" value="">
-    
-    <div class="form-group">
-      <button type="submit" class="submit-btn">送信する</button>
-    </div>
-  </form>
+    // フォーム間でのデータコピー
+    function copyDataBetweenForms(sourceForm, targetForm) {
+      try {
+        // 共通フィールドのコピー
+        document.getElementById(`${targetForm}-customerName`).value = 
+          document.getElementById(`${sourceForm}-customerName`).value;
+          
+        document.getElementById(`${targetForm}-subject`).value = 
+          document.getElementById(`${sourceForm}-subject`).value;
+        
+        // 金額のコピー
+        const amount = document.getElementById(`${sourceForm}-amount`).value;
+        
+        // 見積書または請求書から領収書へコピーする場合
+        if (targetForm === 'receipt') {
+          document.getElementById('receipt-amount').value = amount;
+          
+          // 内容フィールドにソースフォームからの参照情報を追加
+          const sourceNumber = sourceForm === 'quote' ? 
+            document.getElementById('quote-quoteNumber').value : 
+            document.getElementById('invoice-invoiceNumber').value;
+            
+          document.getElementById('receipt-content').value = 
+            `${sourceForm === 'quote' ? '見積書' : '請求書'}番号：${sourceNumber}`;
+        }
+        
+        // 見積書から請求書へコピーする場合
+        if (sourceForm === 'quote' && targetForm === 'invoice') {
+          // 項目情報のコピー
+          const itemsJson = document.getElementById('quote-items-json').value;
+          
+          if (itemsJson) {
+            const items = JSON.parse(itemsJson);
+            
+            // 既存の項目行を削除
+            const container = document.getElementById('invoice-items-container');
+            while (container.firstChild) {
+              container.removeChild(container.firstChild);
+            }
+            
+            // 項目を追加
+            items.forEach((item, index) => {
+              addItemRow('invoice');
+              
+              document.getElementById(`invoice-item-name-${index}`).value = item.name;
+              document.getElementById(`invoice-item-quantity-${index}`).value = item.quantity;
+              document.getElementById(`invoice-item-unit-${index}`).value = item.unit;
+              document.getElementById(`invoice-item-price-${index}`).value = item.price;
+              
+              calculateItemSubtotal('invoice', index);
+            });
+            
+            updateTotals('invoice');
+          }
+          
+          // 消費税率をコピー
+          document.getElementById('invoice-tax-rate').value = 
+            document.getElementById('quote-tax-rate').value;
+        }
+        
+        // 請求書番号または領収書番号の自動設定
+        if (sourceForm === 'quote' && targetForm === 'invoice') {
+          const quoteNumber = document.getElementById('quote-quoteNumber').value;
+          document.getElementById('invoice-invoiceNumber').value = quoteNumber.replace(/^Q/, 'I');
+        } else if ((sourceForm === 'quote' || sourceForm === 'invoice') && targetForm === 'receipt') {
+          const sourceNumber = sourceForm === 'quote' ? 
+            document.getElementById('quote-quoteNumber').value : 
+            document.getElementById('invoice-invoiceNumber').value;
+          document.getElementById('receipt-receiptNumber').value = sourceNumber.replace(/^[QI]/, 'R');
+        }
+      } catch (err) {
+        console.error('データコピーエラー:', err);
+      }
+    }
+  </script>
 </body>
-</html>
+</html><option value="">選択してください</option>
+          <option value="現金一括">現金一括</option>
+          <option value="分割払い">分割払い</option>
+          <option value="契約時支払い">契約時支払い</option>
+          <option value="完了後支払い">完了後支払い</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="quote-constructionSite" class="required">工事場所</label>
+        <input type="text" id="quote-constructionSite" name="constructionSite" required maxlength="200">
+        <div class="error-message" id="quote-constructionSite-error">工事場所を入力してください</div>
+      </div>
+      
+      <!-- 項目追加セクション -->
+      <div class="form-group">
+        <label>項目詳細</label>
+        <button type="button" class="add-item" id="quote-add-item">+ 項目を追加</button>
+        
+        <div id="quote-items-container" class="items-container">
+          <!-- 項目行はJavaScriptで動的に追加 -->
+        </div>
+        
+        <div class="two-cols">
+          <div class="form-group">
+            <label for="quote-tax-rate">消費税率 (%)</label>
+            <input type="number" id="quote-tax-rate" name="taxRate" min="0" max="100" value="10" step="0.1">
+          </div>
+          <div></div>
+        </div>
+        
+        <div class="total-row">
+          <span>小計:</span>
+          <span id="quote-subtotal">0円</span>
+        </div>
+        
+        <div class="total-row">
+          <span>消費税:</span>
+          <span id="quote-tax-amount">0円</span>
+        </div>
+        
+        <div class="total-row">
+          <span>合計金額:</span>
+          <span id="quote-total-amount">0円</span>
+        </div>
+        
+        <input type="hidden" id="quote-amount" name="amount" value="0">
+        <input type="hidden" id="quote-items-json" name="itemsJson" value="[]">
+      </div>
+      
+      <div class="form-group">
+        <label for="quote-remarks">備考</label>
+        <textarea id="quote-remarks" name="remarks" maxlength="1000"></textarea>
+      </div>
+      
+      <input type="hidden" id="quote-userId" name="userId" value="ユーザーID">
+      <input type="hidden" id="quote-redirect" name="redirect" value="">
+      
+      <div class="form-group">
+        <button type="submit" class="submit-btn" id="quote-submit-btn">見積書を送信する</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- 請求書フォーム -->
+  <div id="invoiceForm" class="form-container" role="tabpanel" aria-labelledby="invoiceTab">
+    <form method="POST" action="あなたのGoogleAppsScriptのURL" class="invoice-form" novalidate>
+      <input type="hidden" name="formType" value="invoice">
+      <input type="hidden" name="csrf_token" id="invoice-csrf" value="">
+      
+      <div class="form-group">
+        <label for="invoice-customerName" class="required">お客様氏名</label>
+        <input type="text" id="invoice-customerName" name="customerName" required maxlength="100">
+        <div class="error-message" id="invoice-customerName-error">お客様氏名を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="invoice-invoiceNumber" class="required">請求書番号</label>
+        <input type="text" id="invoice-invoiceNumber" name="invoiceNumber" required pattern="[A-Za-z0-9\-]+" maxlength="20">
+        <div class="error-message" id="invoice-invoiceNumber-error">有効な請求書番号を入力してください（英数字、ハイフン）</div>
+      </div>
+      
+      <div class="two-cols">
+        <div class="form-group">
+          <label for="invoice-issueDate" class="required">発行日</label>
+          <input type="date" id="invoice-issueDate" name="issueDate" required>
+          <div class="error-message" id="invoice-issueDate-error">有効な日付を入力してください</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="invoice-dueDate" class="required">支払期限</label>
+          <input type="date" id="invoice-dueDate" name="dueDate" required>
+          <div class="error-message" id="invoice-dueDate-error">有効な日付を入力してください</div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="invoice-subject" class="required">件名</label>
+        <input type="text" id="invoice-subject" name="subject" required maxlength="200">
+        <div class="error-message" id="invoice-subject-error">件名を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="invoice-paymentMethod" class="required">支払方法</label>
+        <select id="invoice-paymentMethod" name="paymentMethod" required>
+          <option value="">選択してください</option>
+          <option value="銀行振込">銀行振込</option>
+          <option value="現金">現金</option>
+          <option value="クレジットカード">クレジットカード</option>
+          <option value="その他">その他</option>
+        </select>
+        <div class="error-message" id="invoice-paymentMethod-error">支払方法を選択してください</div>
+      </div>
+      
+      <div class="form-group hidden" id="invoice-bankInfoContainer">
+        <label for="invoice-bankInfo">振込先情報</label>
+        <textarea id="invoice-bankInfo" name="bankInfo" placeholder="銀行名、支店名、口座種別、口座番号、口座名義" maxlength="500"></textarea>
+      </div>
+      
+      <!-- 項目追加セクション -->
+      <div class="form-group">
+        <label>項目詳細</label>
+        <button type="button" class="add-item" id="invoice-add-item">+ 項目を追加</button>
+        
+        <div id="invoice-items-container" class="items-container">
+          <!-- 項目行はJavaScriptで動的に追加 -->
+        </div>
+        
+        <div class="two-cols">
+          <div class="form-group">
+            <label for="invoice-tax-rate">消費税率 (%)</label>
+            <input type="number" id="invoice-tax-rate" name="taxRate" min="0" max="100" value="10" step="0.1">
+          </div>
+          <div></div>
+        </div>
+        
+        <div class="total-row">
+          <span>小計:</span>
+          <span id="invoice-subtotal">0円</span>
+        </div>
+        
+        <div class="total-row">
+          <span>消費税:</span>
+          <span id="invoice-tax-amount">0円</span>
+        </div>
+        
+        <div class="total-row">
+          <span>合計金額:</span>
+          <span id="invoice-total-amount">0円</span>
+        </div>
+        
+        <input type="hidden" id="invoice-amount" name="amount" value="0">
+        <input type="hidden" id="invoice-items-json" name="itemsJson" value="[]">
+      </div>
+      
+      <div class="form-group">
+        <label for="invoice-remarks">備考</label>
+        <textarea id="invoice-remarks" name="remarks" maxlength="1000"></textarea>
+      </div>
+      
+      <input type="hidden" id="invoice-userId" name="userId" value="ユーザーID">
+      <input type="hidden" id="invoice-redirect" name="redirect" value="">
+      
+      <div class="form-group">
+        <button type="submit" class="submit-btn" id="invoice-submit-btn">請求書を送信する</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- 領収書フォーム -->
+  <div id="receiptForm" class="form-container" role="tabpanel" aria-labelledby="receiptTab">
+    <form method="POST" action="あなたのGoogleAppsScriptのURL" class="receipt-form" novalidate>
+      <input type="hidden" name="formType" value="receipt">
+      <input type="hidden" name="csrf_token" id="receipt-csrf" value="">
+      
+      <div class="form-group">
+        <label for="receipt-customerName" class="required">お客様氏名</label>
+        <input type="text" id="receipt-customerName" name="customerName" required maxlength="100">
+        <div class="error-message" id="receipt-customerName-error">お客様氏名を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="receipt-receiptNumber" class="required">領収書番号</label>
+        <input type="text" id="receipt-receiptNumber" name="receiptNumber" required pattern="[A-Za-z0-9\-]+" maxlength="20">
+        <div class="error-message" id="receipt-receiptNumber-error">有効な領収書番号を入力してください（英数字、ハイフン）</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="receipt-issueDate" class="required">発行日</label>
+        <input type="date" id="receipt-issueDate" name="issueDate" required>
+        <div class="error-message" id="receipt-issueDate-error">有効な日付を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="receipt-subject" class="required">件名</label>
+        <input type="text" id="receipt-subject" name="subject" required maxlength="200">
+        <div class="error-message" id="receipt-subject-error">件名を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="receipt-paymentMethod" class="required">支払方法</label>
+        <select id="receipt-paymentMethod" name="paymentMethod" required>
+          <option value="">選択してください</option>
+          <option value="銀行振込">銀行振込</option>
+          <option value="現金">現金</option>
+          <option value="クレジットカード">クレジットカード</option>
+          <option value="その他">その他</option>
+        </select>
+        <div class="error-message" id="receipt-paymentMethod-error">支払方法を選択してください</div>
+      </div>
+      
+      <div class="form-group hidden" id="receipt-bankInfoContainer">
+        <label for="receipt-bankInfo">振込先情報</label>
+        <textarea id="receipt-bankInfo" name="bankInfo" placeholder="銀行名、支店名、口座種別、口座番号、口座名義" maxlength="500"></textarea>
+      </div>
+      
+      <!-- 領収書の合計金額 -->
+      <div class="form-group">
+        <label for="receipt-amount" class="required">領収金額</label>
+        <input type="number" id="receipt-amount" name="amount" required min="1" step="1">
+        <div class="error-message" id="receipt-amount-error">有効な領収金額を入力してください</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="receipt-content">内容</label>
+        <textarea id="receipt-content" name="content" maxlength="1000"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="receipt-remarks">備考</label>
+        <textarea id="receipt-remarks" name="remarks" maxlength="1000"></textarea>
+      </div>
+      
+      <input type="hidden" id="receipt-userId" name="userId" value="ユーザーID">
+      <input type="hidden" id="receipt-redirect" name="redirect" value="">
+      
+      <div class="form-group">
+        <button type="submit" class="submit-btn" id="receipt-submit-btn">領収書を送信する</button>
+      </div>
+    </form>
+  </div>
+  
+  <div class="form-footer">
+    © 2025 あなたの会社名
+  </div>
+  
+  <script>
+    // CSRFトークン生成
+    function generateCSRFToken() {
+      return Math.random().toString(36).substring(2, 15) + 
+             Math.random().toString(36).substring(2, 15);
+    }
+    
+    // 初期化処理
+    document.addEventListener('DOMContentLoaded', function() {
+      // CSRFトークンを設定
+      const csrfToken = generateCSRFToken();
+      document.getElementById('quote-csrf').value = csrfToken;
+      document.getElementById('invoice-csrf').value = csrfToken;
+      document.getElementById('receipt-csrf').value = csrfToken;
+      
+      // 今日の日付を取得
+      const today = new Date().toISOString().split('T')[0];
+      
+      // 各フォームの日付フィールドに今日の日付を設定
+      document.getElementById('quote-quoteDate').value = today;
+      document.getElementById('invoice-issueDate').value = today;
+      document.getElementById('receipt-issueDate').value = today;
+      
+      // 見積書の有効期限に30日後を設定
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + 30);
+      document.getElementById('quote-validUntil').value = validUntil.toISOString().split('T')[0];
+      
+      // 請求書の支払期限に30日後を設定
+      document.getElementById('invoice-dueDate').value = validUntil.toISOString().split('T')[0];
+      
+      // 初期項目を追加
+      addItemRow('quote');
+      addItemRow('invoice');
+      
+      // フォームのバリデーション設定
+      setupFormValidation('quote-form');
+      setupFormValidation('invoice-form');
+      setupFormValidation('receipt-form');
+    });
+    
+    // タブ切り替え機能（キーボード操作対応）
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        switchTab(tab);
+      });
+      
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          switchTab(tab);
+        }
+      });
+    });
+    
+    function switchTab(tab) {
+      try {
+        // タブの状態を更新
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+          t.setAttribute('tabindex', '-1');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        tab.setAttribute('tabindex', '0');
+        
+        // フォームの表示を切り替え
+        const formId = tab.getAttribute('data-form') + 'Form';
+        document.querySelectorAll('.form-container').forEach(form => {
+          form.classList.remove('active');
+        });
+        document.getElementById(formId).classList.add('active');
+        
+        // データ連携ボタンを更新
+        updateDataLinkButtons(tab.getAttribute('data-form'));
+      } catch (err) {
+        console.error('タブ切り替えエラー:', err);
+      }
+    }
+    
+    // 支払方法が「銀行振込」の場合のみ振込先情報を表示（請求書と領収書の両方に対応）
+    document.getElementById('invoice-paymentMethod').addEventListener('change', function() {
+      toggleBankInfo('invoice', this.value);
+    });
+    
+    document.getElementById('receipt-paymentMethod').addEventListener('change', function() {
+      toggleBankInfo('receipt', this.value);
+    });
+    
+    function toggleBankInfo(formPrefix, value) {
+      try {
+        const bankInfoContainer = document.getElementById(`${formPrefix}-bankInfoContainer`);
+        if (value === '銀行振込') {
+          bankInfoContainer.classList.remove('hidden');
+        } else {
+          bankInfoContainer.classList.add('hidden');
+        }
+      } catch (err) {
+        console.error('振込先情報表示エラー:', err);
+      }
+    }
+    
+    // 項目行の追加
+    document.getElementById('quote-add-item').addEventListener('click', function() {
+      addItemRow('quote');
+    });
+    
+    document.getElementById('invoice-add-item').addEventListener('click', function() {
+      addItemRow('invoice');
+    });
+    
+    function addItemRow(formPrefix) {
+      try {
+        const container = document.getElementById(`${formPrefix}-items-container`);
+        const rowIndex = container.children.length;
+        
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
