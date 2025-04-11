@@ -1,134 +1,434 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>見積もり情報フォーム</title>
-  <style>
-    body {
-      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-      padding: 20px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .form-header {
-      text-align: center;
-      color: 
-#06c755;
-      margin-bottom: 30px;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    .required:after {
-      content: " *";
-      color: red;
-    }
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    input[type="date"],
-    input[type="number"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-    textarea {
-      height: 120px;
-    }
-    .submit-btn {
-      background-color: 
-#06c755;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 100%;
-    }
-    .submit-btn:hover {
-      background-color: 
-#05a649;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>見積もり作成フォーム</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #06c755; /* LINE Green */
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* paddingを含めた幅計算に */
+            font-size: 16px;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        button {
+            background-color: #06c755; /* LINE Green */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: block; /* 中央寄せのため */
+            margin: 20px auto 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        button:hover {
+            background-color: #05a544;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #itemsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        #itemsTable th, #itemsTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+        #itemsTable th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        #itemsTable input[type="text"],
+        #itemsTable input[type="number"] {
+            width: 95%; /* テーブル内での幅調整 */
+            padding: 6px;
+            font-size: 14px;
+        }
+        #itemsTable .item-subtotal {
+            text-align: right;
+            min-width: 80px;
+        }
+        #itemsTable .action-cell {
+             width: 50px; /* 削除ボタンの幅 */
+             text-align: center;
+        }
+        .remove-item-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .add-item-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .total-section {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .total-section span {
+             display: inline-block;
+             min-width: 100px;
+             text-align: right;
+        }
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            z-index: 1000;
+            visibility: hidden; /* Initially hidden */
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #loadingOverlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        #errorMessage {
+            color: #dc3545;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-  <div class="form-header">
-    <h1>見積もり情報フォーム</h1>
-  </div>
+    <div class="container">
+        <h1>見積もり作成</h1>
+        <form id="quoteForm">
+            <input type="hidden" name="formType" value="quote">
 
-  <form id="quoteForm" method="GET" action="あなたのGoogleAppsScriptのURL">
-    <div class="form-group">
-      <label for="customerName" class="required">お客様氏名</label>
-      <input type="text" id="customerName" name="customerName" required>
+            <div class="form-group">
+                <label for="customerName">顧客名 <span style="color:red">*</span></label>
+                <input type="text" id="customerName" name="customerName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="subject">件名 <span style="color:red">*</span></label>
+                <input type="text" id="subject" name="subject" required>
+            </div>
+
+            <div class="form-group">
+                <label for="quoteNumber">見積番号 (任意)</label>
+                <input type="text" id="quoteNumber" name="quoteNumber">
+                <small>※GASで自動生成される参照IDとは別の番号が必要な場合に入力</small>
+            </div>
+
+            <div class="form-group">
+                <label for="quoteDate">見積日 <span style="color:red">*</span></label>
+                <input type="date" id="quoteDate" name="quoteDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="validUntil">有効期限</label>
+                <input type="date" id="validUntil" name="validUntil">
+            </div>
+
+             <div class="form-group">
+                <label for="constructionSite">工事場所/納品場所 <span style="color:red">*</span></label>
+                <input type="text" id="constructionSite" name="constructionSite" required>
+            </div>
+
+            <div class="form-group">
+                <label for="paymentTerms">支払条件</label>
+                <input type="text" id="paymentTerms" name="paymentTerms" placeholder="例: 納品後翌月末銀行振込">
+            </div>
+
+            <div class="form-group">
+                <label>項目詳細 <span style="color:red">*</span></label>
+                <table id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th>品名</th>
+                            <th>数量</th>
+                            <th>単価(円)</th>
+                            <th>小計(円)</th>
+                            <th></th> </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        </tbody>
+                </table>
+                <button type="button" class="add-item-btn" onclick="addItemRow()">＋ 項目を追加</button>
+            </div>
+
+             <div class="form-group">
+                <label for="taxRate">消費税率 (%)</label>
+                <input type="number" id="taxRate" name="taxRate" value="10" step="0.1" onchange="calculateTotal()">
+            </div>
+
+            <div class="total-section">
+                <div>小計: ¥<span id="subtotalAmount">0</span></div>
+                <div>消費税: ¥<span id="taxAmount">0</span></div>
+                <hr>
+                <div>合計金額: ¥<span id="totalAmount">0</span></div>
+                <input type="hidden" id="amount" name="amount" value="0">
+            </div>
+
+            <div class="form-group">
+                <label for="remarks">備考</label>
+                <textarea id="remarks" name="remarks"></textarea>
+            </div>
+
+            <div id="errorMessage"></div>
+
+            <button type="submit" id="submitButton">見積もりを送信</button>
+        </form>
     </div>
 
-    <div class="form-group">
-      <label for="quoteNumber" class="required">見積番号</label>
-      <input type="text" id="quoteNumber" name="quoteNumber" required>
+    <div id="loadingOverlay">
+        <p>送信中...</p>
     </div>
 
-    <div class="form-group">
-      <label for="quoteDate" class="required">見積もり作成日</label>
-      <input type="date" id="quoteDate" name="quoteDate" required>
-    </div>
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzKI4MV5fBYKZTuas7oqzkGDQY6_piNUVmlBkR_tYSOmYioXT-7hD2HQYq8WXMteg_2/exec";
+        // 指定されたLIFF IDを設定
+        const LIFF_ID = "2007092175-ZRreRvez"; 
 
-    <div class="form-group">
-      <label for="amount" class="required">金額</label>
-      <input type="number" id="amount" name="amount" required>
-    </div>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeLiff();
+            // Set today's date for quoteDate initially
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('quoteDate').value = `${yyyy}-${mm}-${dd}`;
 
-    <div class="form-group">
-      <label for="subject" class="required">件名</label>
-      <input type="text" id="subject" name="subject" required>
-    </div>
+            // Add one initial item row
+            addItemRow();
 
-    <div class="form-group">
-      <label for="paymentTerms">支払い条件</label>
-      <select id="paymentTerms" name="paymentTerms">
-        <option value="">選択してください</option>
-        <option value="現金一括">現金一括</option>
-        <option value="分割払い">分割払い</option>
-        <option value="契約時支払い">契約時支払い</option>
-        <option value="完了後支払い">完了後支払い</option>
-      </select>
-    </div>
+            // Add form submission handler
+            const form = document.getElementById('quoteForm');
+            form.addEventListener('submit', handleFormSubmit);
+        });
 
-    <div class="form-group">
-      <label for="constructionSite" class="required">工事場所</label>
-      <input type="text" id="constructionSite" name="constructionSite" required>
-    </div>
+        // Initialize LIFF
+        function initializeLiff() {
+            liff.init({ liffId: LIFF_ID })
+                .then(() => {
+                    console.log("LIFF init succeeded.");
+                    if (!liff.isLoggedIn()) {
+                        // 必要であればログインを促す
+                        // liff.login();
+                    }
+                })
+                .catch((err) => {
+                    console.error('LIFF Initialization failed.', err);
+                    alert('LIFFの初期化に失敗しました。');
+                });
+        }
 
-    <div class="form-group">
-      <label for="content" class="required">内容</label>
-      <textarea id="content" name="content" required></textarea>
-    </div>
+        // Add a new row for item details
+        function addItemRow() {
+            const tableBody = document.getElementById('itemsTableBody');
+            const newRow = tableBody.insertRow();
+            newRow.innerHTML = `
+                <td><input type="text" class="item-name" placeholder="品名・作業内容" required></td>
+                <td><input type="number" class="item-quantity" value="1" min="0" step="any" required oninput="calculateTotal()"></td>
+                <td><input type="number" class="item-price" value="0" min="0" step="any" required oninput="calculateTotal()"></td>
+                <td class="item-subtotal">¥0</td>
+                <td class="action-cell"><button type="button" class="remove-item-btn" onclick="removeItemRow(this)">×</button></td>
+            `;
+            calculateTotal(); // Recalculate totals when a new row is added
+        }
 
-    <div class="form-group">
-      <label for="remarks">備考</label>
-      <textarea id="remarks" name="remarks"></textarea>
-    </div>
+        // Remove an item row
+        function removeItemRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+            calculateTotal(); // Recalculate totals when a row is removed
+        }
 
-    <!-- ユーザーIDは必要に応じて非表示で送信 -->
-    <input type="hidden" id="userId" name="userId" value="ユーザーID">
+        // Calculate subtotal and total amount
+        function calculateTotal() {
+            let subtotal = 0;
+            const rows = document.getElementById('itemsTableBody').rows;
+            
+            for (let i = 0; i < rows.length; i++) {
+                const quantityInput = rows[i].querySelector('.item-quantity');
+                const priceInput = rows[i].querySelector('.item-price');
+                const subtotalCell = rows[i].querySelector('.item-subtotal');
 
-    <!-- リダイレクト先を指定する場合 -->
-    <input type="hidden" name="redirect" value="">
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                const itemSubtotal = quantity * price;
+                
+                subtotalCell.textContent = `¥${itemSubtotal.toLocaleString()}`;
+                subtotal += itemSubtotal;
+            }
 
-    <div class="form-group">
-      <button type="submit" class="submit-btn">送信する</button>
-    </div>
-  </form>
+            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+            const tax = Math.floor(subtotal * (taxRate / 100)); // 小数点以下切り捨て
+            const total = subtotal + tax;
+
+            document.getElementById('subtotalAmount').textContent = subtotal.toLocaleString();
+            document.getElementById('taxAmount').textContent = tax.toLocaleString();
+            document.getElementById('totalAmount').textContent = total.toLocaleString();
+            document.getElementById('amount').value = total; // Update hidden total amount field
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(event) {
+            event.preventDefault(); // Prevent default form submission
+            const form = event.target;
+            const submitButton = document.getElementById('submitButton');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const errorMessageDiv = document.getElementById('errorMessage');
+
+            errorMessageDiv.textContent = ''; // Clear previous errors
+            submitButton.disabled = true;
+            loadingOverlay.classList.add('show'); // Show loading overlay
+
+            // Collect item details into an array of objects
+            const items = [];
+            const rows = document.getElementById('itemsTableBody').rows;
+            if (rows.length === 0) {
+                 errorMessageDiv.textContent = '項目詳細を少なくとも1つ入力してください。';
+                 submitButton.disabled = false;
+                 loadingOverlay.classList.remove('show');
+                 return; // Stop submission if no items
+            }
+            let itemsValid = true; // Flag to check if all item rows are valid
+            for (let i = 0; i < rows.length; i++) {
+                const nameInput = rows[i].querySelector('.item-name');
+                const quantityInput = rows[i].querySelector('.item-quantity');
+                const priceInput = rows[i].querySelector('.item-price');
+                
+                // Basic validation for item rows
+                if (!nameInput.value.trim() || parseFloat(quantityInput.value) < 0 || parseFloat(priceInput.value) < 0) {
+                    itemsValid = false;
+                    break; // Exit loop if an invalid row is found
+                }
+
+                items.push({
+                    name: nameInput.value,
+                    quantity: parseFloat(quantityInput.value) || 0,
+                    price: parseFloat(priceInput.value) || 0
+                });
+            }
+
+            // Check basic form validity and item validity
+             if (!form.checkValidity() || !itemsValid) {
+                errorMessageDiv.textContent = '必須項目を入力してください。また、項目詳細の各行には品名を入力し、数量と単価には0以上の数値を入力してください。';
+                submitButton.disabled = false;
+                loadingOverlay.classList.remove('show');
+                // Optionally, trigger browser's default validation UI
+                form.reportValidity(); 
+                return;
+            }
+
+
+            // Create FormData object
+            const formData = new FormData(form);
+            // Add itemsJson to FormData
+            formData.append('itemsJson', JSON.stringify(items));
+            // Ensure the calculated total amount is included
+            formData.set('amount', document.getElementById('amount').value); 
+
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: formData,
+                    // mode: 'no-cors' // 通常GAS Web Appでは不要
+                });
+
+                if (!response.ok) {
+                    // Handle HTTP errors (e.g., 404, 500)
+                     throw new Error(`サーバーエラーが発生しました: ${response.status} ${response.statusText}`);
+                }
+                
+                // GASからのレスポンスはJSON形式と仮定
+                const result = await response.json();
+
+                if (result.success) {
+                    // 送信成功
+                    console.log("送信成功:", result);
+                    // 完了ページにリダイレクト
+                    window.location.href = 'success.html'; // 完了ページのURLを確認・修正してください
+                } else {
+                    // GAS側でエラーが発生した場合
+                    console.error("送信エラー (GAS):", result.error);
+                    errorMessageDiv.textContent = `送信に失敗しました: ${result.error}`;
+                }
+
+            } catch (error) {
+                // ネットワークエラーなど
+                console.error("送信エラー (Network/JS):", error);
+                errorMessageDiv.textContent = `送信中にエラーが発生しました: ${error.message}`;
+            } finally {
+                // Always re-enable button and hide overlay
+                submitButton.disabled = false;
+                loadingOverlay.classList.remove('show');
+            }
+        }
+
+    </script>
 </body>
 </html>
