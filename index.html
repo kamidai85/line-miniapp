@@ -264,7 +264,7 @@
             initializeLiff();
             // Set today's date for quoteDate initially
             const today = new Date();
-            const yyyy = today.getFullYear();
+            const<y_bin_925> = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
             document.getElementById('quoteDate').value = `${yyyy}-${mm}-${dd}`;
@@ -418,8 +418,8 @@
                 if (result.success) {
                     // 送信成功
                     console.log("送信成功:", result);
-                    // 完了ページにリダイレクト
-                    window.location.href = 'success.html'; // 完了ページのURLを確認・修正してください
+                    // ★★★★★★★ 完了ページ 'thanks.html' にリダイレクト ★★★★★★★
+                    window.location.href = 'thanks.html'; 
                 } else {
                     // GAS側でエラーが発生した場合
                     console.error("送信エラー (GAS):", result.error);
