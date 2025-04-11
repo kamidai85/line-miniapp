@@ -248,11 +248,19 @@
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzKI4MV5fBYKZTuas7oqzkGDQY6_piNUVmlBkR_tYSOmYioXT-7hD2HQYq8WXMteg_2/exec";
+        // ご指定のGASウェブアプリURLを設定
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyxMDvU4KrbjZeX3u87uu28K1g2bf9AUxMvN2sTKf64-wQ0katbUyKIRMsJrHzmvgeC/exec"; 
+
         // 指定されたLIFF IDを設定
         const LIFF_ID = "2007092175-ZRreRvez"; 
 
         document.addEventListener('DOMContentLoaded', function() {
+            // GAS_URLが設定されていない場合のエラーチェック (念のため)
+            if (GAS_URL === "" || GAS_URL.indexOf("AKfy") === -1 ) { // 簡単なチェック
+                 alert("エラー: GASのウェブアプリURLが正しく設定されていないようです。HTMLコードを確認してください。");
+                 document.getElementById('submitButton').disabled = true; // 送信ボタンを無効化
+                 return;
+            }
             initializeLiff();
             // Set today's date for quoteDate initially
             const today = new Date();
@@ -419,9 +427,9 @@
                 }
 
             } catch (error) {
-                // ネットワークエラーなど
+                // ネットワークエラーなど (Load failed はここで捕捉されることが多い)
                 console.error("送信エラー (Network/JS):", error);
-                errorMessageDiv.textContent = `送信中にエラーが発生しました: ${error.message}`;
+                errorMessageDiv.textContent = `送信中にエラーが発生しました: ${error.message}`; // エラーメッセージを表示
             } finally {
                 // Always re-enable button and hide overlay
                 submitButton.disabled = false;
