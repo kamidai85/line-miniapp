@@ -17,7 +17,7 @@
         h1 { text-align: center; color: #06c755; margin-bottom: 25px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        input[type="text"], input[type="date"], input[type="number"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; appearance: none; }
+        input[type="text"], input[type="date"], input[type="number"], input[type="tel"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; appearance: none; }
         input[type="number"] { text-align: right; }
         textarea { height: 80px; resize: vertical; }
         button { background-color: #06c755; color: white; border: none; border-radius: 4px; padding: 12px 20px; font-size: 16px; cursor: pointer; transition: background-color 0.2s; display: block; margin: 20px auto 0; width: 100%; max-width: 300px; }
@@ -44,48 +44,76 @@
         #errorMessage { color: #dc3545; margin-top: 15px; text-align: center; font-weight: bold; min-height: 1.2em; }
         small { font-size: 0.8em; color: #6c757d; }
         .required-mark { color: red; margin-left: 2px; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; gap: 0; }
+        }
+        .current-date { font-size: 14px; text-align: right; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>見積もり作成</h1>
+        <div class="current-date">作成日: <span id="todayDate"></span></div>
         <form id="quoteForm">
             <input type="hidden" name="formType" value="quote">
+            <input type="hidden" name="createdDate" id="createdDateInput">
 
-            <div class="form-group">
-                <label for="customerName">顧客名<span class="required-mark">*</span></label>
-                <input type="text" id="customerName" name="customerName" required>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="customerName">顧客名<span class="required-mark">*</span></label>
+                    <input type="text" id="customerName" name="customerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject">件名<span class="required-mark">*</span></label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="staffName">担当者氏名<span class="required-mark">*</span></label>
+                    <input type="text" id="staffName" name="staffName" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffPhone">担当者電話番号<span class="required-mark">*</span></label>
+                    <input type="tel" id="staffPhone" name="staffPhone" required pattern="[0-9\-]*">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="projectNumber">案件番号 (任意)</label>
+                    <input type="text" id="projectNumber" name="projectNumber">
+                    <small>※GASが自動生成する参照IDとは別</small>
+                </div>
+                <div class="form-group">
+                    <label for="quoteDate">見積日<span class="required-mark">*</span></label>
+                    <input type="date" id="quoteDate" name="quoteDate" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="validUntil">有効期限</label>
+                    <input type="date" id="validUntil" name="validUntil">
+                </div>
+                <div class="form-group">
+                    <label for="constructionSite">工事場所/納品場所<span class="required-mark">*</span></label>
+                    <input type="text" id="constructionSite" name="constructionSite" required>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="subject">件名<span class="required-mark">*</span></label>
-                <input type="text" id="subject" name="subject" required>
-            </div>
-
-            <div class="form-group">
-                <label for="quoteNumber">見積番号 (任意)</label>
-                <input type="text" id="quoteNumber" name="quoteNumber">
-                <small>※GASが自動生成する参照IDとは別</small>
-            </div>
-
-            <div class="form-group">
-                <label for="quoteDate">見積日<span class="required-mark">*</span></label>
-                <input type="date" id="quoteDate" name="quoteDate" required>
-            </div>
-
-            <div class="form-group">
-                <label for="validUntil">有効期限</label>
-                <input type="date" id="validUntil" name="validUntil">
-            </div>
-
-            <div class="form-group">
-                <label for="constructionSite">工事場所/納品場所<span class="required-mark">*</span></label>
-                <input type="text" id="constructionSite" name="constructionSite" required>
-            </div>
-
-            <div class="form-group">
-                <label for="paymentTerms">支払条件</label>
-                <input type="text" id="paymentTerms" name="paymentTerms" placeholder="例: 納品後翌月末銀行振込">
+                <label for="paymentTerms">支払条件<span class="required-mark">*</span></label>
+                <select id="paymentTerms" name="paymentTerms" required>
+                    <option value="" disabled selected>支払方法を選択してください</option>
+                    <option value="銀行振込">銀行振込</option>
+                    <option value="クレジットカード">クレジットカード</option>
+                    <option value="現金払い">現金払い</option>
+                </select>
+                <small>※支払い条件の詳細は備考欄に記入できます</small>
             </div>
 
             <div class="form-group">
@@ -121,7 +149,7 @@
 
             <div class="form-group">
                 <label for="remarks">備考</label>
-                <textarea id="remarks" name="remarks"></textarea>
+                <textarea id="remarks" name="remarks" placeholder="支払い条件の詳細や、その他備考事項があればこちらに記入してください。"></textarea>
             </div>
 
             <div id="errorMessage"></div>
@@ -147,10 +175,32 @@
                  return;
             }
             initializeLiff();
+            setCurrentDate();
             setInitialDate();
             bindEventListeners();
             addItemRow();
         });
+
+        // --- 今日の日付を表示 ---
+        function setCurrentDate() {
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            const dateString = today.toLocaleDateString('ja-JP', options);
+            
+            const todayElement = document.getElementById('todayDate');
+            if (todayElement) {
+                todayElement.textContent = dateString;
+            }
+            
+            // hidden inputにも日付を設定
+            const createdDateInput = document.getElementById('createdDateInput');
+            if (createdDateInput) {
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                createdDateInput.value = `${year}-${month}-${day}`;
+            }
+        }
 
         // --- LIFF初期化 ---
         function initializeLiff() {
@@ -374,6 +424,7 @@
                     document.getElementById('backButton').addEventListener('click', function() {
                         container.innerHTML = originalContent;
                         // 必要なイベントリスナーを再度バインド
+                        setCurrentDate();
                         bindEventListeners();
                         addItemRow();
                         setInitialDate();
