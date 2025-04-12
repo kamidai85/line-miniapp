@@ -143,7 +143,7 @@
 
     <script>
         // 新しいGASウェブアプリURLを設定
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbx6HFCbEw-xyawwRC5wijq8sEx2nr3pyjBc4QRr0QsTOOeUovc3Qb30iFGbG4eOVhU/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzWd9qO2GggqxmhWsMCyU0W6Xs8_9-Vi-sadOMENGhdcyHkevvgH6aD2voJAvC4PSg/exec"; 
         const LIFF_ID = "2007092175-ZRreRvez"; 
         const TAX_RATE = 10; // 消費税率を10%に固定
 
@@ -380,6 +380,17 @@
                 if (result.success) {
                     console.log("送信成功:", result);
                     
+                    // PDFダウンロードリンクの作成
+                    const pdfDownloadHtml = result.pdfUrl ? 
+                        `<p style="margin: 20px 0;">
+                          <a href="${result.pdfUrl}" target="_blank" style="display: inline-block; background-color: #dc3545; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
+                            PDFをダウンロード
+                          </a>
+                        </p>` : 
+                        (result.pdfError ? 
+                          `<p style="color: #dc3545; margin: 10px 0;">PDF生成に失敗しました: ${result.pdfError}</p>` : 
+                          '');
+                    
                     // フォームを非表示にして完了メッセージを表示
                     const container = document.querySelector('.container');
                     
@@ -391,7 +402,10 @@
                         <div style="text-align: center; padding: 20px;">
                             <div style="color: #06c755; font-size: 60px; margin: 20px 0;">✓</div>
                             <h1 style="color: #06c755; font-size: 24px; margin-bottom: 20px;">送信完了</h1>
-                            <p style="font-size: 16px; line-height: 1.6; color: #333; margin-bottom: 20px;">お問い合わせありがとうございました。<br>内容を確認の上、担当者より連絡させていただきます。</p>
+                            <p style="font-size: 16px; line-height: 1.6; color: #333; margin-bottom: 20px;">
+                                見積もりデータが正常に送信されました。<br>参照ID: ${result.referenceId || ''}
+                            </p>
+                            ${pdfDownloadHtml}
                             <p style="font-size: 16px; line-height: 1.6; color: #333; margin-bottom: 20px;">このページは閉じて大丈夫です。</p>
                             <button id="closeButton" style="background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 10px 20px; font-size: 16px; cursor: pointer; margin-right: 10px;">ウィンドウを閉じる</button>
                             <button id="backButton" style="background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 10px 20px; font-size: 16px; cursor: pointer;">新しい見積もりを作成</button>
