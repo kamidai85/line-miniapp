@@ -5,13 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>送信完了</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // クエリパラメータがなければ追加してリダイレクト
+        if (!window.location.search) {
+            window.location.href = window.location.href + "?v=19";
+        }
+    </script>
     <style>
-        body { font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; margin: 0; padding: 16px; background-color: #f7f7f7; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 90vh; }
-        .container { background-color: white; border-radius: 8px; padding: 30px 20px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); max-width: 600px; }
+        body { font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; margin: 0; padding: 16px; background-color: #f8f9fa; color: #333; }
+        .container { background-color: white; border-radius: 8px; padding: 30px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
         h1 { color: #06c755; font-size: 24px; margin-bottom: 20px; }
         p { font-size: 16px; line-height: 1.6; color: #333; margin-bottom: 20px; }
         .check-icon { color: #06c755; font-size: 60px; line-height: 1; margin-bottom: 20px; display: inline-block; }
-        .close-button { background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 10px 20px; font-size: 16px; cursor: pointer; margin-top: 20px; }
+        .close-button { background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
         .close-button:hover { background-color: #5a6268; }
     </style>
 </head>
@@ -31,11 +37,14 @@
                     document.getElementById('closeButton').addEventListener('click', function() {
                         if (liff.isInClient()) { liff.closeWindow(); } else { alert('このウィンドウを閉じてください。'); }
                     });
-                    setTimeout(() => { if (liff.isInClient()) { liff.closeWindow(); } }, 3000);
-                }).catch((err) => {
+                })
+                .catch((err) => {
                     console.error("LIFF初期化失敗 (thanks.html):", err);
                     document.getElementById('closeButton').addEventListener('click', function() { alert('このウィンドウを閉じてください。'); });
                 });
+            
+            // 3秒後に自動的に閉じる（LIFF内の場合のみ）
+            setTimeout(() => { if (liff.isInClient()) { liff.closeWindow(); } }, 3000);
         });
     </script>
 </body>
