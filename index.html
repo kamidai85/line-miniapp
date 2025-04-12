@@ -59,6 +59,7 @@
         <form id="quoteForm">
             <input type="hidden" name="formType" value="quote">
             <input type="hidden" name="createdDate" id="createdDateInput">
+            <input type="hidden" name="taxRate" value="10">
 
             <div class="form-row">
                 <div class="form-group">
@@ -94,26 +95,9 @@
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="validUntil">有効期限</label>
-                    <input type="date" id="validUntil" name="validUntil">
-                </div>
-                <div class="form-group">
-                    <label for="constructionSite">工事場所/納品場所<span class="required-mark">*</span></label>
-                    <input type="text" id="constructionSite" name="constructionSite" required>
-                </div>
-            </div>
-
             <div class="form-group">
-                <label for="paymentTerms">支払条件<span class="required-mark">*</span></label>
-                <select id="paymentTerms" name="paymentTerms" required>
-                    <option value="" disabled selected>支払方法を選択してください</option>
-                    <option value="銀行振込">銀行振込</option>
-                    <option value="クレジットカード">クレジットカード</option>
-                    <option value="現金払い">現金払い</option>
-                </select>
-                <small>※支払い条件の詳細は備考欄に記入できます</small>
+                <label for="validUntil">有効期限</label>
+                <input type="date" id="validUntil" name="validUntil">
             </div>
 
             <div class="form-group">
@@ -134,14 +118,9 @@
                 <button type="button" class="add-item-btn" id="addItemBtn">＋ 項目を追加</button>
             </div>
 
-            <div class="form-group">
-                <label for="taxRate">消費税率 (%)</label>
-                <input type="number" id="taxRate" name="taxRate" value="10" step="0.1">
-            </div>
-
             <div class="total-section">
                 <div>小計: ¥<span id="subtotalAmount">0</span></div>
-                <div>消費税 (<span id="taxRateDisplay">10</span>%): ¥<span id="taxAmount">0</span></div>
+                <div>消費税 (10%): ¥<span id="taxAmount">0</span></div>
                 <hr style="border-top: 1px solid #ccc;">
                 <div><strong>合計金額: ¥<span id="totalAmount">0</span></strong></div>
                 <input type="hidden" id="amount" name="amount" value="0">
@@ -149,7 +128,7 @@
 
             <div class="form-group">
                 <label for="remarks">備考</label>
-                <textarea id="remarks" name="remarks" placeholder="支払い条件の詳細や、その他備考事項があればこちらに記入してください。"></textarea>
+                <textarea id="remarks" name="remarks" placeholder="備考事項があればこちらに記入してください。"></textarea>
             </div>
 
             <div id="errorMessage"></div>
@@ -166,6 +145,7 @@
         // 新しいGASウェブアプリURLを設定
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxdj86yCnlbMYCGkVQwIsJ6dLJvFBrGJzNTxq0YuQxUypFlKelenoQjHWCm-OH-ueM/exec"; 
         const LIFF_ID = "2007092175-ZRreRvez"; 
+        const TAX_RATE = 10; // 消費税率を10%に固定
 
         // --- DOMContentLoaded: 初期化処理 ---
         document.addEventListener('DOMContentLoaded', function() {
@@ -178,7 +158,11 @@
             setCurrentDate();
             setInitialDate();
             bindEventListeners();
-            addItemRow();
+            
+            // 初期状態で8行の項目欄を追加
+            for (let i = 0; i < 8; i++) {
+                addItemRow();
+            }
         });
 
         // --- 今日の日付を表示 ---
@@ -231,7 +215,6 @@
         function bindEventListeners() {
             const addItemButton = document.getElementById('addItemBtn');
             const quoteForm = document.getElementById('quoteForm');
-            const taxRateInput = document.getElementById('taxRate');
             const itemsTableBody = document.getElementById('itemsTableBody');
 
             if (addItemButton) {
@@ -240,10 +223,7 @@
             if (quoteForm) {
                 quoteForm.addEventListener('submit', handleFormSubmit);
             }
-             if (taxRateInput) {
-                 // 税率が変わったら合計再計算
-                taxRateInput.addEventListener('input', calculateTotal);
-            }
+
             // イベント委任：項目詳細テーブル内の入力や削除ボタンに対応
             if (itemsTableBody) {
                 itemsTableBody.addEventListener('input', function(event) {
@@ -293,15 +273,13 @@
         function calculateTotal() {
             let subtotal = 0;
             const tableBody = document.getElementById('itemsTableBody');
-            const taxRateInput = document.getElementById('taxRate');
-            const taxRateDisplay = document.getElementById('taxRateDisplay');
             const subtotalAmountDisplay = document.getElementById('subtotalAmount');
             const taxAmountDisplay = document.getElementById('taxAmount');
             const totalAmountDisplay = document.getElementById('totalAmount');
             const amountInput = document.getElementById('amount'); // Hidden input for total
 
             // Check if all display elements exist
-            if (!tableBody || !taxRateInput || !taxRateDisplay || !subtotalAmountDisplay || !taxAmountDisplay || !totalAmountDisplay || !amountInput) {
+            if (!tableBody || !subtotalAmountDisplay || !taxAmountDisplay || !totalAmountDisplay || !amountInput) {
                 console.error("合計計算に必要な要素が見つかりません。");
                 return; 
             }
@@ -323,12 +301,10 @@
                 subtotal += itemSubtotal;
             }
 
-            const taxRate = parseFloat(taxRateInput.value) || 0;
-            // Ensure tax calculation doesn't result in negative or unexpected values
-            const tax = (taxRate >= 0 && subtotal >= 0) ? Math.floor(subtotal * (taxRate / 100)) : 0;
+            // 固定税率を使用
+            const tax = Math.floor(subtotal * (TAX_RATE / 100));
             const total = subtotal + tax;
 
-            taxRateDisplay.textContent = taxRate.toLocaleString(); 
             subtotalAmountDisplay.textContent = subtotal.toLocaleString();
             taxAmountDisplay.textContent = tax.toLocaleString();
             totalAmountDisplay.textContent = total.toLocaleString();
@@ -426,7 +402,10 @@
                         // 必要なイベントリスナーを再度バインド
                         setCurrentDate();
                         bindEventListeners();
-                        addItemRow();
+                        // 8行の項目欄を追加
+                        for (let i = 0; i < 8; i++) {
+                            addItemRow();
+                        }
                         setInitialDate();
                     });
                     
