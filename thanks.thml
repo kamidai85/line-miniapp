@@ -1,51 +1,37 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>送信完了</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script>
-        // クエリパラメータがなければ追加してリダイレクト
-        if (!window.location.search) {
-            window.location.href = window.location.href + "?v=19";
+// 変更前
+window.location.href = 'thanks.html' + window.location.search;
+
+// 変更後
+// thanksページなしで完了メッセージを表示する
+if (result.success) {
+    console.log("送信成功:", result);
+    // フォームを非表示にする
+    document.querySelector('form').style.display = 'none';
+    // 同じページに完了メッセージを表示
+    const container = document.querySelector('.container');
+    container.innerHTML = `
+        <div style="text-align: center;">
+            <div style="color: #06c755; font-size: 60px; margin: 20px 0;">✓</div>
+            <h1>送信完了</h1>
+            <p>お問い合わせありがとうございました。<br>内容を確認の上、担当者より連絡させていただきます。</p>
+            <p>このページは閉じて大丈夫です。</p>
+            <button id="closeButton" style="background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 10px 20px; font-size: 16px; cursor: pointer;">ウィンドウを閉じる</button>
+        </div>
+    `;
+    
+    // 閉じるボタンの処理
+    document.getElementById('closeButton').addEventListener('click', function() {
+        if (liff.isInClient()) { 
+            liff.closeWindow(); 
+        } else { 
+            alert('このウィンドウを閉じてください。'); 
         }
-    </script>
-    <style>
-        body { font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; margin: 0; padding: 16px; background-color: #f8f9fa; color: #333; }
-        .container { background-color: white; border-radius: 8px; padding: 30px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-        h1 { color: #06c755; font-size: 24px; margin-bottom: 20px; }
-        p { font-size: 16px; line-height: 1.6; color: #333; margin-bottom: 20px; }
-        .check-icon { color: #06c755; font-size: 60px; line-height: 1; margin-bottom: 20px; display: inline-block; }
-        .close-button { background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
-        .close-button:hover { background-color: #5a6268; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="check-icon">✓</div>
-        <h1>送信完了</h1>
-        <p>お問い合わせありがとうございました。<br>内容を確認の上、担当者より連絡させていただきます。</p>
-        <p>このページは閉じて大丈夫です。</p>
-        <button id="closeButton" class="close-button">ウィンドウを閉じる</button>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            liff.init({ liffId: "2007092175-ZRreRvez" })
-                .then(() => {
-                    console.log("LIFF初期化成功 (thanks.html)");
-                    document.getElementById('closeButton').addEventListener('click', function() {
-                        if (liff.isInClient()) { liff.closeWindow(); } else { alert('このウィンドウを閉じてください。'); }
-                    });
-                })
-                .catch((err) => {
-                    console.error("LIFF初期化失敗 (thanks.html):", err);
-                    document.getElementById('closeButton').addEventListener('click', function() { alert('このウィンドウを閉じてください。'); });
-                });
-            
-            // 3秒後に自動的に閉じる（LIFF内の場合のみ）
-            setTimeout(() => { if (liff.isInClient()) { liff.closeWindow(); } }, 3000);
-        });
-    </script>
-</body>
-</html>
+    });
+    
+    // 3秒後に自動的に閉じる（LIFF内の場合のみ）
+    setTimeout(() => { 
+        if (liff.isInClient()) { 
+            liff.closeWindow(); 
+        } 
+    }, 3000);
+}
