@@ -85,8 +85,8 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="projectNumber">案件番号 (任意)</label>
-                    <input type="text" id="projectNumber" name="projectNumber">
+                    <label for="projectNumber">案件番号<span class="required-mark">*</span></label>
+                    <input type="text" id="projectNumber" name="projectNumber" required>
                     <small>※GASが自動生成する参照IDとは別</small>
                 </div>
                 <div class="form-group">
@@ -96,8 +96,8 @@
             </div>
 
             <div class="form-group">
-                <label for="validUntil">有効期限</label>
-                <input type="date" id="validUntil" name="validUntil">
+                <label for="validUntil">有効期限<span class="required-mark">*</span></label>
+                <input type="date" id="validUntil" name="validUntil" required>
             </div>
 
             <div class="form-group">
@@ -205,9 +205,20 @@
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
+            
+            // 見積日を設定
             const quoteDateInput = document.getElementById('quoteDate');
             if (quoteDateInput) {
                 quoteDateInput.value = todayStr;
+            }
+            
+            // 有効期限を1ヶ月後に設定
+            const validUntil = document.getElementById('validUntil');
+            if (validUntil) {
+                const nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                const validUntilStr = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-${String(nextMonth.getDate()).padStart(2, '0')}`;
+                validUntil.value = validUntilStr;
             }
         }
 
