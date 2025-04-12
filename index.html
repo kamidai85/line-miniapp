@@ -2,42 +2,48 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <title>見積もり作成フォーム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>見積もり作成フォーム</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // クエリパラメータがなければ追加してリダイレクト
+        if (!window.location.search) {
+            window.location.href = window.location.href + "?v=19";
+        }
+    </script>
     <style>
-        /* CSSは変更なしのため省略（以前提示したものと同じ） */
         body { font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; margin: 0; padding: 16px; background-color: #f8f9fa; color: #333; }
         .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #06c755; margin-bottom: 25px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        input[type="text"], input[type="date"], input[type="number"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; appearance: none; /* iOSでの見た目調整 */ }
-        input[type="number"] { text-align: right; } /* 数値は右寄せに */
+        input[type="text"], input[type="date"], input[type="number"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; appearance: none; }
+        input[type="number"] { text-align: right; }
         textarea { height: 80px; resize: vertical; }
         button { background-color: #06c755; color: white; border: none; border-radius: 4px; padding: 12px 20px; font-size: 16px; cursor: pointer; transition: background-color 0.2s; display: block; margin: 20px auto 0; width: 100%; max-width: 300px; }
         button:hover { background-color: #05a544; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #itemsTable { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; /* テーブルレイアウト固定 */ }
-        #itemsTable th, #itemsTable td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; word-wrap: break-word; /* 長い文字の折り返し */ }
+        #itemsTable { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+        #itemsTable th, #itemsTable td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; word-wrap: break-word; }
         #itemsTable th { background-color: #f2f2f2; font-weight: bold; }
-        #itemsTable th:nth-child(1) { width: 35%; } /* 品名 */
-        #itemsTable th:nth-child(2) { width: 15%; } /* 数量 */
-        #itemsTable th:nth-child(3) { width: 20%; } /* 単価 */
-        #itemsTable th:nth-child(4) { width: 20%; } /* 小計 */
-        #itemsTable th:nth-child(5) { width: 10%; } /* 削除 */
+        #itemsTable th:nth-child(1) { width: 35%; }
+        #itemsTable th:nth-child(2) { width: 15%; }
+        #itemsTable th:nth-child(3) { width: 20%; }
+        #itemsTable th:nth-child(4) { width: 20%; }
+        #itemsTable th:nth-child(5) { width: 10%; }
         #itemsTable input[type="text"], #itemsTable input[type="number"] { width: 95%; padding: 6px; font-size: 14px; -webkit-appearance: none; appearance: none; }
-        #itemsTable .item-subtotal { text-align: right; min-width: auto; /* 幅はthで指定 */ }
-        #itemsTable .action-cell { width: auto; /* 幅はthで指定 */ text-align: center; }
+        #itemsTable .item-subtotal { text-align: right; min-width: auto; }
+        #itemsTable .action-cell { width: auto; text-align: center; }
         .remove-item-btn { background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 8px; font-size: 12px; cursor: pointer; }
         .add-item-btn { background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 8px 15px; font-size: 14px; cursor: pointer; margin-top: 10px; }
         .total-section { margin-top: 20px; text-align: right; font-size: 16px; font-weight: bold; }
-        .total-section div { margin-bottom: 5px; } /* 合計欄の行間調整 */
+        .total-section div { margin-bottom: 5px; }
         .total-section span { display: inline-block; min-width: 100px; text-align: right; margin-left: 10px; }
         #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); color: white; display: flex; justify-content: center; align-items: center; font-size: 1.2em; z-index: 1000; visibility: hidden; opacity: 0; transition: opacity 0.3s; }
         #loadingOverlay.show { visibility: visible; opacity: 1; }
-        #errorMessage { color: #dc3545; margin-top: 15px; text-align: center; font-weight: bold; min-height: 1.2em; /* エラーメッセージ表示領域確保 */ }
+        #errorMessage { color: #dc3545; margin-top: 15px; text-align: center; font-weight: bold; min-height: 1.2em; }
         small { font-size: 0.8em; color: #6c757d; }
-        .required-mark { color: red; margin-left: 2px; } /* 必須マーク */
+        .required-mark { color: red; margin-left: 2px; }
     </style>
 </head>
 <body>
@@ -72,7 +78,7 @@
                 <input type="date" id="validUntil" name="validUntil">
             </div>
 
-             <div class="form-group">
+            <div class="form-group">
                 <label for="constructionSite">工事場所/納品場所<span class="required-mark">*</span></label>
                 <input type="text" id="constructionSite" name="constructionSite" required>
             </div>
@@ -95,14 +101,15 @@
                         </tr>
                     </thead>
                     <tbody id="itemsTableBody">
-                        </tbody>
+                    </tbody>
                 </table>
                 <button type="button" class="add-item-btn" id="addItemBtn">＋ 項目を追加</button>
             </div>
 
-             <div class="form-group">
+            <div class="form-group">
                 <label for="taxRate">消費税率 (%)</label>
-                <input type="number" id="taxRate" name="taxRate" value="10" step="0.1"> </div>
+                <input type="number" id="taxRate" name="taxRate" value="10" step="0.1">
+            </div>
 
             <div class="total-section">
                 <div>小計: ¥<span id="subtotalAmount">0</span></div>
@@ -141,14 +148,18 @@
             }
             initializeLiff();
             setInitialDate();
-            bindEventListeners(); // イベントリスナーをまとめて設定
-            addItemRow(); // 最初に1行追加
+            bindEventListeners();
+            addItemRow();
         });
 
         // --- LIFF初期化 ---
         function initializeLiff() {
             liff.init({ liffId: LIFF_ID })
-                .then(() => console.log("LIFF init succeeded."))
+                .then(() => {
+                    console.log("LIFF init succeeded.");
+                    // 初期化成功後、UIの状態を更新
+                    document.querySelector('.container').style.display = 'block';
+                })
                 .catch((err) => {
                     console.error('LIFF Initialization failed.', err);
                     handleError('LIFFの初期化に失敗しました。画面を再読み込みしてください。');
@@ -158,7 +169,7 @@
         // --- 初期日付設定 ---
         function setInitialDate() {
             const today = new Date();
-            const year = today.getFullYear(); // Use getFullYear()
+            const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
@@ -333,7 +344,8 @@
 
                 if (result.success) {
                     console.log("送信成功:", result);
-                    window.location.href = 'thanks.html'; // Redirect to thanks.html
+                    // クエリパラメータを維持したリダイレクト
+                    window.location.href = 'thanks.html' + window.location.search;
                 } else {
                     console.error("送信失敗 (GAS):", result.error);
                     handleError(`送信に失敗しました: ${result.error || 'GASからエラーが返されました'}`);
@@ -353,11 +365,6 @@
             const items = [];
             const rows = document.getElementById('itemsTableBody').rows;
             let isValid = true;
-            // Reset background colors first
-             for (let i = 0; i < rows.length; i++) {
-                 rows[i].style.backgroundColor = '';
-             }
-            // Validate
             for (let i = 0; i < rows.length; i++) {
                 const nameInput = rows[i].querySelector('.item-name');
                 const quantityInput = rows[i].querySelector('.item-quantity');
@@ -366,8 +373,6 @@
                 if (!nameInput || !quantityInput || !priceInput) {
                     console.error("項目行に必要な要素が見つかりません。行:", i);
                     isValid = false;
-                    // Highlight should ideally happen here too, but break prevents it.
-                    // Could restructure to collect all errors first if needed.
                     break; 
                 }
                 const name = nameInput.value.trim(); 
@@ -377,8 +382,10 @@
                 if (name === '' || isNaN(quantity) || quantity < 0 || isNaN(price) || price < 0) {
                      isValid = false;
                      rows[i].style.backgroundColor = '#ffdddd'; // Highlight the problematic row
-                     // Don't break immediately, find all invalid rows (optional improvement)
-                } 
+                     break;
+                } else {
+                     rows[i].style.backgroundColor = ''; // Reset background color
+                }
                 items.push({ name: name, quantity: quantity, price: price });
             }
 
@@ -386,6 +393,10 @@
                 handleError('項目詳細の入力内容を確認してください（空の品名、または0未満の数量/単価）。赤くハイライトされた行をご確認ください。');
                 return null; 
             }
+            // Reset background colors on success
+             for (let i = 0; i < rows.length; i++) {
+                 rows[i].style.backgroundColor = '';
+             }
             return items;
         }
 
@@ -398,14 +409,13 @@
              console.error("エラー表示:", message);
         }
 
-         // --- エラーメッセージクリア ---
+        // --- エラーメッセージクリア ---
         function clearError() {
              const errorMessageDiv = document.getElementById('errorMessage');
             if (errorMessageDiv) {
                 errorMessageDiv.textContent = '';
             }
         }
-
     </script>
 </body>
 </html>
