@@ -491,14 +491,26 @@
             }
         }
 
-        // フォームデータ送信（リトライ機能付き）
-        async function sendFormDataWithRetry(formData, retryCount = 0) {
-            try {
-                const response = await fetch(GAS_URL, {
-    method: 'POST',
-    body: formData
-});
-                });
+      // sendFormDataWithRetry関数を見つけて、次のように簡略化
+async function sendFormDataWithRetry(formData, retryCount = 0) {
+    try {
+        console.log("送信を開始します...");
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`サーバー応答エラー: ${response.status} ${response.statusText}`);
+        }
+        
+        console.log("レスポンス受信:", response);
+        return await response.json();
+    } catch (error) {
+        console.error("送信エラー:", error);
+        throw error;
+    }
+}
 
                 // Check for network/server errors first
                 if (!response.ok) {
