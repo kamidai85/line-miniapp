@@ -495,13 +495,9 @@
         async function sendFormDataWithRetry(formData, retryCount = 0) {
             try {
                 const response = await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'omit', // CORS対策
-                    mode: 'cors', // CORS対策
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest' // CORS対策
-                    }
+    method: 'POST',
+    body: formData
+});
                 });
 
                 // Check for network/server errors first
