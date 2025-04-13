@@ -293,17 +293,18 @@
             });
         }
 
-   // addItemRow関数を探し、以下のように修正
+// --- 項目行の追加 --- 関数を見つけて、内容を確認
 function addItemRow() {
+    // デバッグ用のコンソール出力を追加
+    console.log("addItemRow called");
+    
     const tableBody = document.getElementById('itemsTableBody');
     if (!tableBody) {
-        console.error("itemsTableBodyが見つかりません");
+        console.error("itemsTableBody element not found");
         return;
     }
 
-    // デバッグ出力を追加
-    console.log("項目行を追加します");
-
+    // テーブルに行を追加
     const newRow = tableBody.insertRow();
     newRow.innerHTML = `
         <td><input type="text" class="item-name" placeholder="品名・作業内容" required autocomplete="off"></td>
@@ -313,8 +314,9 @@ function addItemRow() {
         <td class="action-cell"><button type="button" class="remove-item-btn" aria-label="削除">×</button></td>
     `;
     
-    // 合計計算を呼び出し
+    // Calculate total after row is added
     calculateTotal();
+}
     
     // デバッグ用：現在の行数を表示
     console.log(`現在の項目行数: ${tableBody.rows.length}`);
@@ -500,27 +502,41 @@ function addItemRow() {
             }
         }
 
-      // sendFormDataWithRetry関数を見つけて、次のように簡略化
+   // フォームデータ送信関数を簡略化
 async function sendFormDataWithRetry(formData, retryCount = 0) {
     try {
-        console.log("送信を開始します...");
+        console.log("送信開始");
         const response = await fetch(GAS_URL, {
             method: 'POST',
             body: formData
         });
-
+        
+        console.log("レスポンス受信:", response.status);
+        
         if (!response.ok) {
-            throw new Error(`サーバー応答エラー: ${response.status} ${response.statusText}`);
+            throw new Error(`サーバー応答エラー: ${response.status}`);
         }
         
-        console.log("レスポンス受信:", response);
-        return await response.json();
+        // テキスト形式で取得してみる
+        const text = await response.text();
+        console.log("受信データ:", text);
+        
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error("JSON解析エラー:", e);
+            return { success: true, message: "データは送信されましたが、レスポンスの解析に失敗しました" };
+        }
     } catch (error) {
-        console.error("送信エラー:", error);
+        console.error("送信エラー:", error.message);
+        if (retryCount < MAX_RETRIES) {
+            console.log(`リトライ ${retryCount + 1}/${MAX_RETRIES}`);
+            await new Promise(r => setTimeout(r, 1000));
+            return sendFormDataWithRetry(formData, retryCount + 1);
+        }
         throw error;
     }
 }
-
                 // Check for network/server errors first
                 if (!response.ok) {
                     // 429や5xx系のエラーはリトライ可能
