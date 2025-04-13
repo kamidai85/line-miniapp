@@ -3,144 +3,177 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>見積もりフォーム</title>
+  <title>見積書フォーム</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background-color: #f4f4f4;
-    }
-    .container {
-      background-color: #fff;
-      padding: 24px;
-      border-radius: 8px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #06c755;
-    }
-    .form-group {
-      margin-bottom: 16px;
-    }
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    input, textarea, select {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #06c755;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      width: 100%;
-    }
-    button:hover {
-      background-color: #05a544;
-    }
-    #message {
-      margin-top: 16px;
-      font-weight: bold;
-      text-align: center;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+    .container { background: #fff; padding: 24px; border-radius: 8px; max-width: 720px; margin: auto; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+    h1 { color: #06c755; text-align: center; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; }
+    input, textarea { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
+    button { background: #06c755; color: #fff; padding: 12px; border: none; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px; }
+    button:hover { background: #05a644; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table th, table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    table th { background: #f3f3f3; }
+    .remove-btn { background: #e74c3c; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+    .total { text-align: right; margin-top: 10px; font-weight: bold; }
+    #message { margin-top: 20px; font-weight: bold; text-align: center; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>見積もりフォーム</h1>
+    <h1>見積書フォーム</h1>
     <form id="quoteForm">
       <input type="hidden" name="formType" value="quote">
       <div class="form-group">
-        <label for="customerName">顧客名</label>
-        <input type="text" id="customerName" name="customerName" required>
+        <label>顧客名</label>
+        <input type="text" name="customerName" required>
       </div>
       <div class="form-group">
-        <label for="subject">件名</label>
-        <input type="text" id="subject" name="subject" required>
+        <label>件名</label>
+        <input type="text" name="subject" required>
       </div>
       <div class="form-group">
-        <label for="amount">合計金額（円）</label>
-        <input type="number" id="amount" name="amount" required>
+        <label>担当者名</label>
+        <input type="text" name="staffName">
       </div>
       <div class="form-group">
-        <label for="staffName">担当者名</label>
-        <input type="text" id="staffName" name="staffName">
+        <label>案件番号</label>
+        <input type="text" name="projectNumber">
       </div>
       <div class="form-group">
-        <label for="projectNumber">案件番号</label>
-        <input type="text" id="projectNumber" name="projectNumber">
+        <label>見積日</label>
+        <input type="date" name="quoteDate">
       </div>
       <div class="form-group">
-        <label for="quoteDate">見積日</label>
-        <input type="date" id="quoteDate" name="quoteDate">
+        <label>有効期限</label>
+        <input type="date" name="validUntil">
       </div>
+
       <div class="form-group">
-        <label for="validUntil">有効期限</label>
-        <input type="date" id="validUntil" name="validUntil">
+        <label>項目詳細</label>
+        <table id="itemsTable">
+          <thead>
+            <tr>
+              <th>品名</th>
+              <th>数量</th>
+              <th>単価</th>
+              <th>小計</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" onclick="addItem()">＋ 項目を追加</button>
       </div>
+
+      <div class="total">合計金額: ¥<span id="totalAmount">0</span></div>
+      <input type="hidden" name="amount" id="amount">
+
       <div class="form-group">
-        <label for="itemsJson">項目詳細（JSON形式）</label>
-        <textarea id="itemsJson" name="itemsJson" rows="3" placeholder='例： [{"name":"〇〇","quantity":1,"price":10000}]'></textarea>
+        <label>備考</label>
+        <textarea name="remarks" rows="3"></textarea>
       </div>
-      <div class="form-group">
-        <label for="remarks">備考</label>
-        <textarea id="remarks" name="remarks" rows="3"></textarea>
-      </div>
+
       <button type="submit">送信</button>
     </form>
     <div id="message"></div>
   </div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxhfBPNy-urJzwtddRkJGOctNPbEzBn7vl44KEq_ZoPrQk1O0vIB2ZPV7gzS5g/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyl8V1dvNM8bysQq_QjqWWL2ESIwpyJ9ED1IF6BZcdVldMZkPahTzMldcIO_ORiFvY/exec";
 
-    document.getElementById("quoteForm").addEventListener("submit", async function(event) {
-      event.preventDefault();
-      const form = event.target;
+    function addItem(name = '', qty = 1, price = 0) {
+      const tbody = document.querySelector("#itemsTable tbody");
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td><input type="text" class="item-name" value="${name}"></td>
+        <td><input type="number" class="item-qty" value="${qty}" min="0"></td>
+        <td><input type="number" class="item-price" value="${price}" min="0"></td>
+        <td class="item-subtotal">¥0</td>
+        <td><button type="button" class="remove-btn" onclick="removeItem(this)">×</button></td>
+      `;
+      tbody.appendChild(row);
+      updateTotal();
+      row.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", updateTotal);
+      });
+    }
+
+    function removeItem(btn) {
+      btn.closest("tr").remove();
+      updateTotal();
+    }
+
+    function updateTotal() {
+      const rows = document.querySelectorAll("#itemsTable tbody tr");
+      let total = 0;
+
+      rows.forEach(row => {
+        const qty = parseFloat(row.querySelector(".item-qty").value) || 0;
+        const price = parseFloat(row.querySelector(".item-price").value) || 0;
+        const subtotal = qty * price;
+        row.querySelector(".item-subtotal").textContent = `¥${subtotal.toLocaleString()}`;
+        total += subtotal;
+      });
+
+      document.getElementById("totalAmount").textContent = total.toLocaleString();
+      document.getElementById("amount").value = total;
+    }
+
+    document.getElementById("quoteForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const form = e.target;
       const message = document.getElementById("message");
-      message.textContent = "送信中です…";
+
+      // 項目をJSON化
+      const items = [];
+      document.querySelectorAll("#itemsTable tbody tr").forEach(row => {
+        const name = row.querySelector(".item-name").value;
+        const qty = parseFloat(row.querySelector(".item-qty").value) || 0;
+        const price = parseFloat(row.querySelector(".item-price").value) || 0;
+        if (name) {
+          items.push({ name, quantity: qty, price });
+        }
+      });
+
+      const formData = new FormData(form);
+      formData.append("itemsJson", JSON.stringify(items));
 
       try {
-        const formData = new FormData(form);
-
-        const response = await fetch(GAS_URL, {
+        const res = await fetch(GAS_URL, {
           method: "POST",
           body: formData,
-          credentials: "omit",
           mode: "cors",
+          credentials: "omit",
           headers: {
             "X-Requested-With": "XMLHttpRequest"
           }
         });
-
-        const result = await response.json();
-
+        const result = await res.json();
         if (result.success) {
           message.style.color = "green";
-          message.textContent = "送信が完了しました！";
+          message.textContent = "送信完了しました！";
           form.reset();
+          document.querySelector("#itemsTable tbody").innerHTML = "";
+          addItem(); // 初期項目を1つ
+          updateTotal();
         } else {
           message.style.color = "red";
-          message.textContent = "送信に失敗しました: " + (result.error || "不明なエラー");
+          message.textContent = "送信失敗: " + result.error;
         }
-      } catch (error) {
-        console.error("送信中エラー:", error);
+      } catch (err) {
         message.style.color = "red";
-        message.textContent = "ネットワークエラーが発生しました。再度お試しください。";
+        message.textContent = "通信エラーが発生しました";
+        console.error(err);
       }
+    });
+
+    // 初期表示に1行追加
+    window.addEventListener("DOMContentLoaded", () => {
+      addItem();
     });
   </script>
 </body>
