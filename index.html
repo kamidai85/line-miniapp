@@ -293,23 +293,32 @@
             });
         }
 
-        // --- 項目行の追加 ---
-        function addItemRow() {
-            const tableBody = document.getElementById('itemsTableBody');
-            if (!tableBody) return;
+   // addItemRow関数を探し、以下のように修正
+function addItemRow() {
+    const tableBody = document.getElementById('itemsTableBody');
+    if (!tableBody) {
+        console.error("itemsTableBodyが見つかりません");
+        return;
+    }
 
-            const newRow = tableBody.insertRow();
-            // Input types explicitly set for potentially better mobile keyboard behavior
-            newRow.innerHTML = `
-                <td><input type="text" class="item-name" placeholder="品名・作業内容" required autocomplete="off"></td>
-                <td><input type="number" class="item-quantity" value="1" min="0" step="any" required inputmode="decimal" autocomplete="off"></td>
-                <td><input type="number" class="item-price" value="0" min="0" step="any" required inputmode="decimal" autocomplete="off"></td>
-                <td class="item-subtotal" style="text-align:right;">¥0</td>
-                <td class="action-cell"><button type="button" class="remove-item-btn" aria-label="削除">×</button></td>
-            `;
-            // Calculate total after row is added to the DOM
-            calculateTotal(); 
-        }
+    // デバッグ出力を追加
+    console.log("項目行を追加します");
+
+    const newRow = tableBody.insertRow();
+    newRow.innerHTML = `
+        <td><input type="text" class="item-name" placeholder="品名・作業内容" required autocomplete="off"></td>
+        <td><input type="number" class="item-quantity" value="1" min="0" step="any" required inputmode="decimal" autocomplete="off"></td>
+        <td><input type="number" class="item-price" value="0" min="0" step="any" required inputmode="decimal" autocomplete="off"></td>
+        <td class="item-subtotal" style="text-align:right;">¥0</td>
+        <td class="action-cell"><button type="button" class="remove-item-btn" aria-label="削除">×</button></td>
+    `;
+    
+    // 合計計算を呼び出し
+    calculateTotal();
+    
+    // デバッグ用：現在の行数を表示
+    console.log(`現在の項目行数: ${tableBody.rows.length}`);
+}
 
         // --- 項目行の削除 ---
         function removeItemRow(button) {
