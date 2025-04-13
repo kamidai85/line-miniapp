@@ -1,1 +1,17 @@
 
+<!-- thanks.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>送信完了しました！</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f0f0f0; }
+    h1 { color: #06c755; }
+  </style>
+</head>
+<body>
+  <h1>送信完了しました！</h1>
+  <p>お見積もりデータを正常に送信しました。ありがとうございました。</p>
+</body>
+</html>
